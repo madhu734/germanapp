@@ -151,6 +151,9 @@
     #toast { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: #000; padding: 12px 24px; border-radius: 8px; font-weight: bold; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     #toast.show { transform: translateY(0); opacity: 1; }
 
+    /* Next Batch Trigger Container */
+    #next-batch-trigger { display: none; background: rgba(56,201,132,0.1); border: 1px dashed var(--das); border-radius: 12px; padding: 32px; text-align: center; margin-top: 24px; }
+
     @media (max-width: 768px) {
       .sidebar { width:70px; padding:16px 8px; }
       .sidebar-brand span, .nav-label, .user-profile-btn { display:none; }
@@ -169,13 +172,13 @@
   <!-- App Loader -->
   <div id="loader">
     <div style="font-size: 40px; margin-bottom: 20px;">🇩🇪</div>
-    <div id="loader-text">Connecting to Database...</div>
+    <div id="loader-text">Connecting to System...</div>
   </div>
 
   <!-- Toast Notification -->
   <div id="toast">Message</div>
 
-  <!-- Authentication Modal (Custom Manual Auth for Base Collection) -->
+  <!-- Authentication Modal -->
   <div id="auth-modal" class="modal-overlay">
     <div class="modal-box">
       <div style="display: flex; justify-content: flex-end; margin-bottom: -20px;">
@@ -183,10 +186,10 @@
       </div>
       <div style="font-size: 40px; margin-bottom: 16px;">🇩🇪</div>
       <h2 style="margin-bottom: 8px;">Log In / Register</h2>
-      <p style="color: var(--muted); margin-bottom: 24px; font-size: 14px;">Sign in to track your progress.</p>
+      <p style="color: var(--muted); margin-bottom: 24px; font-size: 14px;">Sign in to track your progress. Only 5 digits needed!</p>
       
-      <input type="text" id="auth-username" class="input" placeholder="Enter Username (Spaces allowed)" style="text-align: center;">
-      <input type="password" id="auth-password" class="input" placeholder="Password" style="text-align: center;" onkeydown="if(event.key==='Enter') handleLogin()">
+      <input type="text" id="auth-username" class="input" placeholder="Username (no spaces preferred)" style="text-align: center;">
+      <input type="password" id="auth-password" class="input" placeholder="Password (min 5 chars)" style="text-align: center;" onkeydown="if(event.key==='Enter') handleLogin()">
       
       <div style="display: flex; gap: 10px; margin-top: 12px;">
         <button class="btn btn-outline" style="flex: 1;" onclick="handleRegister()" id="auth-reg-btn">Register</button>
@@ -296,7 +299,7 @@
         <div class="card stat-card" style="border-top: 3px solid var(--accent)">
           <div class="stat-label">Words Learned</div>
           <div class="stat-val" id="stat-words">0</div>
-          <div class="stat-sub">of 3000 (B1 Target)</div>
+          <div class="stat-sub">of Total Available</div>
         </div>
         <div class="card stat-card" style="border-top: 3px solid var(--der)">
           <div class="stat-label">Day Streak</div>
@@ -332,11 +335,11 @@
     <div id="page-vocab" class="page">
       <div class="page-header">
         <h1 class="page-title">📚 <span class="lang-en">Vocab Tracker</span><span class="lang-bn">শব্দভাণ্ডার ট্র্যাকার</span></h1>
-        <p class="page-subtitle">Browse all words. Log in to take the certification test and save them.</p>
+        <p class="page-subtitle">Learn vocabulary synced directly from your database and n8n workflows.</p>
       </div>
-      <div style="display:flex; gap:12px; margin-bottom: 20px;">
+      <div style="display:flex; gap:12px; margin-bottom: 20px; flex-wrap: wrap;">
         <input type="text" id="search-input" class="input" placeholder="Search German or English..." style="max-width: 300px; margin-bottom:0;">
-        <div style="display:flex; gap:6px;" id="cat-filters">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;" id="cat-filters">
           <button class="pill active" onclick="setVocabFilter('all')">All</button>
           <button class="pill" onclick="setVocabFilter('noun')">Noun</button>
           <button class="pill" onclick="setVocabFilter('verb')">Verb</button>
@@ -345,12 +348,24 @@
           <button class="pill" onclick="setVocabFilter('adverb')">Adv</button>
         </div>
       </div>
+      
       <div class="card" style="padding: 0;">
         <table>
           <thead><tr><th style="width:50px">#</th><th>German</th><th>Translation</th><th>Type</th><th style="text-align: center; width:140px;">Action</th></tr></thead>
-          <tbody id="vocab-body"></tbody>
+          <tbody id="vocab-body">
+            <tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--muted);">Loading words from database...</td></tr>
+          </tbody>
         </table>
       </div>
+
+      <!-- Trigger Next Batch UI -->
+      <div id="next-batch-trigger">
+        <div style="font-size: 40px; margin-bottom: 10px;">🎉</div>
+        <p style="color:var(--das); font-weight:bold; font-size:18px; margin-bottom:10px;">অসাধারণ! আপনি বর্তমান ব্যাচের সবগুলো শব্দ শিখে ফেলেছেন!</p>
+        <p style="color:var(--muted); font-size:13px; margin-bottom:20px;">আপনার n8n সার্ভারকে নির্দেশ দিন আরও নতুন শব্দ জেনারেট করে ডাটাবেসে পাঠাতে।</p>
+        <button class="btn btn-accent" id="trigger-n8n-btn" onclick="triggerNextBatch()" style="padding: 12px 24px; font-size: 15px;">🚀 পরবর্তী ৫০টি শব্দ আনুন</button>
+      </div>
+
     </div>
 
     <!-- MY WORDS (Protected) -->
@@ -380,7 +395,6 @@
           <div class="flashcard-face flashcard-back">
             <div style="font-size: 24px; font-weight: 600; color: var(--accent);" id="fc-back">---</div>
             <div style="font-size: 16px; color: var(--muted); margin-top: 8px;" id="fc-bn">---</div>
-            <div style="font-size: 14px; color: var(--text); margin-top: 16px; font-style: italic;" id="fc-ex">---</div>
           </div>
         </div>
       </div>
@@ -448,9 +462,13 @@
   </main>
 
   <!-- ══════════════════════════════════════════════════════════════
-       DATA & JAVASCRIPT LOGIC (ONLY PocketBase)
+       DATA & JAVASCRIPT LOGIC
   ══════════════════════════════════════════════════════════════ -->
   <script>
+    // --- Configuration ---
+    // n8n Webhook URL (Production)
+    const N8N_WEBHOOK_URL = "https://n8n.tmadhu.me/webhook/e48110e1-919d-4dd9-8783-a1441e125a66";
+
     // --- Data: Detailed Alphabet Array ---
     const ALPHABET = [
       { letter:"A a", ipa:"/aː/", ex:"Apfel", tip:"Like 'ah' in father", special:false },
@@ -485,61 +503,8 @@
       { letter:"ß", ipa:"/sː/", ex:"Straße", tip:"Sharp double-S, no buzz", special:true }
     ];
 
-    // --- Data: Detailed Vocab Array (50 words) ---
-    const VOCAB = [
-      { id:1, de:"ich", en:"I", bn:"আমি", g:null, cat:"pronoun" },
-      { id:2, de:"sein", en:"to be", bn:"হওয়া", g:null, cat:"verb" },
-      { id:3, de:"haben", en:"to have", bn:"রাখা", g:null, cat:"verb" },
-      { id:4, de:"werden", en:"will / become", bn:"হবে", g:null, cat:"verb" },
-      { id:5, de:"können", en:"can / be able", bn:"পারা", g:null, cat:"verb" },
-      { id:6, de:"der Mann", en:"man", bn:"পুরুষ", g:"der", cat:"noun" },
-      { id:7, de:"die Frau", en:"woman", bn:"মহিলা", g:"die", cat:"noun" },
-      { id:8, de:"das Kind", en:"child", bn:"শিশু", g:"das", cat:"noun" },
-      { id:9, de:"die Zeit", en:"time", bn:"সময়", g:"die", cat:"noun" },
-      { id:10, de:"das Jahr", en:"year", bn:"বছর", g:"das", cat:"noun" },
-      { id:11, de:"der Tag", en:"day", bn:"দিন", g:"der", cat:"noun" },
-      { id:12, de:"die Hand", en:"hand", bn:"হাত", g:"die", cat:"noun" },
-      { id:13, de:"der Mensch", en:"person/human", bn:"মানুষ", g:"der", cat:"noun" },
-      { id:14, de:"das Haus", en:"house", bn:"বাড়ি", g:"das", cat:"noun" },
-      { id:15, de:"die Welt", en:"world", bn:"পৃথিবী", g:"die", cat:"noun" },
-      { id:16, de:"das Wasser", en:"water", bn:"পানি", g:"das", cat:"noun" },
-      { id:17, de:"der Weg", en:"way / path", bn:"পথ", g:"der", cat:"noun" },
-      { id:18, de:"die Schule", en:"school", bn:"বিদ্যালয়", g:"die", cat:"noun" },
-      { id:19, de:"das Buch", en:"book", bn:"বই", g:"das", cat:"noun" },
-      { id:20, de:"die Stadt", en:"city", bn:"শহর", g:"die", cat:"noun" },
-      { id:21, de:"der Vater", en:"father", bn:"বাবা", g:"der", cat:"noun" },
-      { id:22, de:"die Mutter", en:"mother", bn:"মা", g:"die", cat:"noun" },
-      { id:23, de:"das Geld", en:"money", bn:"টাকা", g:"das", cat:"noun" },
-      { id:24, de:"der Name", en:"name", bn:"নাম", g:"der", cat:"noun" },
-      { id:25, de:"die Arbeit", en:"work / job", bn:"কাজ", g:"die", cat:"noun" },
-      { id:26, de:"gut", en:"good", bn:"ভালো", g:null, cat:"adjective" },
-      { id:27, de:"groß", en:"big / great", bn:"বড়", g:null, cat:"adjective" },
-      { id:28, de:"alt", en:"old", bn:"পুরনো", g:null, cat:"adjective" },
-      { id:29, de:"neu", en:"new", bn:"নতুন", g:null, cat:"adjective" },
-      { id:30, de:"klein", en:"small", bn:"ছোট", g:null, cat:"adjective" },
-      { id:31, de:"schön", en:"beautiful", bn:"সুন্দর", g:null, cat:"adjective" },
-      { id:32, de:"schnell", en:"fast", bn:"দ্রুত", g:null, cat:"adjective" },
-      { id:33, de:"wichtig", en:"important", bn:"গুরুত্বপূর্ণ", g:null, cat:"adjective" },
-      { id:34, de:"und", en:"and", bn:"এবং", g:null, cat:"conjunction" },
-      { id:35, de:"oder", en:"or", bn:"অথবা", g:null, cat:"conjunction" },
-      { id:36, de:"aber", en:"but", bn:"কিন্তু", g:null, cat:"conjunction" },
-      { id:37, de:"weil", en:"because", bn:"কারণ", g:null, cat:"conjunction" },
-      { id:38, de:"dass", en:"that (conj.)", bn:"যে", g:null, cat:"conjunction" },
-      { id:39, de:"nicht", en:"not", bn:"না", g:null, cat:"adverb" },
-      { id:40, de:"auch", en:"also / too", bn:"ও / এছাড়া", g:null, cat:"adverb" },
-      { id:41, de:"jetzt", en:"now", bn:"এখন", g:null, cat:"adverb" },
-      { id:42, de:"hier", en:"here", bn:"এখানে", g:null, cat:"adverb" },
-      { id:43, de:"noch", en:"still / yet", bn:"এখনও", g:null, cat:"adverb" },
-      { id:44, de:"schon", en:"already", bn:"ইতিমধ্যে", g:null, cat:"adverb" },
-      { id:45, de:"so", en:"so / thus", bn:"তাই", g:null, cat:"adverb" },
-      { id:46, de:"wie", en:"how / like", bn:"কিভাবে", g:null, cat:"adverb" },
-      { id:47, de:"was", en:"what", bn:"কি", g:null, cat:"pronoun" },
-      { id:48, de:"wer", en:"who", bn:"কে", g:null, cat:"pronoun" },
-      { id:49, de:"wo", en:"where", bn:"কোথায়", g:null, cat:"adverb" },
-      { id:50, de:"warum", en:"why", bn:"কেন", g:null, cat:"adverb" }
-    ];
-
     // --- State ---
+    let VOCAB = []; // Will be dynamically loaded from DB via PocketBase
     let learnedWordsMap = new Map();
     let currentLang = 'en';
     let vSearch = "", vCat = "all";
@@ -552,6 +517,7 @@
 
     // --- Initialize PocketBase ---
     let pb = null;
+    const PB_PASS_PADDING = "_PdB26!"; 
 
     // --- UI Helpers ---
     window.showToast = function(msg) {
@@ -622,21 +588,18 @@
       if(!pb) return window.showToast("Database not initialized yet.");
       const btn = document.getElementById('auth-reg-btn'); 
       const unameRaw = document.getElementById('auth-username').value.trim();
-      const pass = document.getElementById('auth-password').value.trim();
+      const passRaw = document.getElementById('auth-password').value.trim();
       const errBox = document.getElementById('auth-error');
       
-      if(!unameRaw || !pass) return window.showToast("নাম এবং পাসওয়ার্ড দুটিই দিন।");
+      if(!unameRaw || !passRaw) return window.showToast("নাম এবং পাসওয়ার্ড দুটিই দিন।");
       
       btn.innerText = "Registering...";
       errBox.style.display = 'none';
 
-      // Remove double quotes which break the filter query, allow spaces
       const safeName = unameRaw.replace(/"/g, '').trim();
 
       try {
-        // ১. চেক করা যে এই নামে কেউ আগে থেকেই আছে কিনা
         const existing = await pb.collection('app_users').getList(1, 1, { filter: `username = "${safeName}"` });
-        
         if(existing.items.length > 0) {
             errBox.innerText = "এই নাম আগেই ব্যবহার করা হয়েছে। অন্য নাম দিন অথবা লগইন করুন।";
             errBox.style.display = 'block';
@@ -644,15 +607,13 @@
             return;
         }
 
-        // ২. নতুন ইউজার তৈরি করা
         const record = await pb.collection('app_users').create({ 
           username: safeName, 
-          password: pass, 
+          password: passRaw, 
           learnedWords: [], 
           streak: 1 
         });
         
-        // সফলভাবে তৈরি হলে লগইন করে দেব
         finalizeLogin(record);
         window.showToast("Registration Successful!");
         
@@ -668,20 +629,17 @@
       if(!pb) return window.showToast("Database not initialized yet.");
       const btn = document.getElementById('auth-log-btn'); 
       const unameRaw = document.getElementById('auth-username').value.trim();
-      const pass = document.getElementById('auth-password').value.trim();
+      const passRaw = document.getElementById('auth-password').value.trim();
       const errBox = document.getElementById('auth-error');
       
-      if(!unameRaw || !pass) return window.showToast("নাম এবং পাসওয়ার্ড দুটিই দিন।");
+      if(!unameRaw || !passRaw) return window.showToast("নাম এবং পাসওয়ার্ড দুটিই দিন।");
       
       btn.innerText = "Connecting...";
       errBox.style.display = 'none';
-
       const safeName = unameRaw.replace(/"/g, '').trim();
 
       try {
-        // ইউজারনেম দিয়ে ডেটা খোঁজা
         const result = await pb.collection('app_users').getList(1, 1, { filter: `username = "${safeName}"` });
-        
         if(result.items.length === 0) {
             errBox.innerText = "এই নামে কোনো একাউন্ট পাওয়া যায়নি!";
             errBox.style.display = 'block';
@@ -690,16 +648,13 @@
         }
 
         const userRecord = result.items[0];
-
-        // পাসওয়ার্ড মেলানো
-        if(userRecord.password !== pass) {
+        if(userRecord.password !== passRaw) {
             errBox.innerText = "ভুল পাসওয়ার্ড!";
             errBox.style.display = 'block';
             btn.innerText = "Log In";
             return;
         }
 
-        // লগইন সফল
         finalizeLogin(userRecord);
         window.showToast("Logged in successfully!");
 
@@ -716,9 +671,7 @@
       currentUsername = record.username;
       currentUserId = record.id;
       
-      // ব্রাউজারে সেভ করে রাখা যাতে পেজ রিফ্রেশ দিলেও লগইন থাকে
       localStorage.setItem('german_app_session_id', record.id);
-      
       window.closeAuthModal();
       enableUserModeUI(record);
     }
@@ -743,7 +696,6 @@
     async function dbSaveWords(wordsArray) {
       if(pb && isLoggedIn && currentUserId) { 
         try {
-          // Update the normal table directly
           await pb.collection('app_users').update(currentUserId, { learnedWords: wordsArray }); 
         } catch (e) {
           console.error("Failed to save words to normal DB:", e);
@@ -767,11 +719,48 @@
       window.renderVocab(); window.renderMyWords();
     }
 
+    // --- Dynamic N8N Trigger Logic ---
+    window.triggerNextBatch = async function() {
+      const btn = document.getElementById('trigger-n8n-btn');
+      btn.innerText = "⏳ Generating & Syncing...";
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: "generate_batch", current_count: VOCAB.length })
+        });
+        
+        if(response.ok) {
+           window.showToast("Success! N8N is generating words. Reloading in 10s...");
+           setTimeout(() => { window.location.reload(); }, 10000);
+        } else {
+           window.showToast("Failed to trigger N8N workflow.");
+           btn.innerText = "🚀 পরবর্তী ৫০টি শব্দ আনুন";
+           btn.disabled = false;
+        }
+      } catch(e) {
+        console.error(e);
+        window.showToast("Network Error: Could not reach n8n webhook.");
+        btn.innerText = "🚀 পরবর্তী ৫০টি শব্দ আনুন";
+        btn.disabled = false;
+      }
+    }
+
     // --- Renderers ---
     window.renderVocab = function() {
-      const tbody = document.getElementById('vocab-body'); tbody.innerHTML = '';
+      const tbody = document.getElementById('vocab-body'); 
+      tbody.innerHTML = '';
+
+      if(VOCAB.length === 0) {
+         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--muted);">No words available. Make sure DB is synced.</td></tr>';
+         document.getElementById('next-batch-trigger').style.display = 'none';
+         return;
+      }
+
       const filtered = VOCAB.filter(w => (!vSearch || w.de.toLowerCase().includes(vSearch) || w.en.toLowerCase().includes(vSearch)) && (vCat === 'all' || (w.cat && w.cat === vCat) || (vCat==='noun' && w.g)));
-      filtered.forEach(w => {
+      filtered.forEach((w, idx) => {
         const isLearned = learnedWordsMap.has(w.id);
         const btnCls = isLearned ? 'btn-success' : 'btn-outline';
         const btnTxt = isLearned ? '✓ Certified' : '+ Learn';
@@ -780,16 +769,24 @@
         
         tbody.innerHTML += `
           <tr style="opacity: ${isLearned ? '0.6' : '1'}">
-            <td>${w.id}</td>
+            <td>${idx + 1}</td>
             <td class="vocab-de ${w.g ? 'c-'+w.g : ''}">${w.de}</td>
             <td>${currentLang === 'bn' ? w.bn : w.en}</td>
             <td><span class="badge ${catBadgeCls}">${catText}</span></td>
             <td style="text-align:center;">
-              <button class="btn btn-sm ${btnCls}" onclick="openCertModal(${w.id})" ${isLearned?'disabled':''} style="width:100%">${btnTxt}</button>
+              <button class="btn btn-sm ${btnCls}" onclick="openCertModal('${w.id}')" ${isLearned?'disabled':''} style="width:100%">${btnTxt}</button>
             </td>
           </tr>
         `;
       });
+
+      // Check if ALL fetched vocab has been learned to show the trigger button
+      const allLearned = VOCAB.length > 0 && VOCAB.every(w => learnedWordsMap.has(w.id));
+      if(allLearned) {
+        document.getElementById('next-batch-trigger').style.display = 'block';
+      } else {
+        document.getElementById('next-batch-trigger').style.display = 'none';
+      }
     };
 
     window.setVocabFilter = function(val) {
@@ -823,7 +820,7 @@
       baseGrid.innerHTML = ''; specialGrid.innerHTML = '';
 
       ALPHABET.forEach(a => {
-        const letterChar = a.letter.split(' ')[0]; // Gets 'A' from 'A a'
+        const letterChar = a.letter.split(' ')[0]; 
         const html = `
           <div class="alpha-card">
             <!-- Letter Pronunciation -->
@@ -904,6 +901,7 @@
       const list = Array.from(learnedWordsMap.keys());
       if(list.length === 0) return document.getElementById('fc-inner').innerHTML = `<div class="flashcard-face"><div style="color:var(--muted)">No words learned yet. Add some from Vocab Tracker!</div></div>`;
       const wObj = VOCAB.find(v => v.id === list[fcIdx]);
+      if(!wObj) return;
       document.getElementById('fc-front').innerText = wObj.de; document.getElementById('fc-back').innerText = wObj.en; document.getElementById('fc-bn').innerText = currentLang === 'bn' ? wObj.bn : '';
       const inner = document.getElementById('fc-inner'); fcFlipped ? inner.classList.add('flipped') : inner.classList.remove('flipped');
     };
@@ -943,20 +941,35 @@
     };
 
     // =========================================================================
-    // 🚀 INITIALIZATION (PocketBase Base Collection Logic)
+    // 🚀 INITIALIZATION (PocketBase Only)
     // =========================================================================
     window.onload = function() {
-      // 1. Initial Render of static UI
       renderAlphabet();
-      renderVocab();
 
-      // 2. Initialize PocketBase
       setTimeout(async () => {
         try {
           pb = new PocketBase('https://efljudb.duckdns.org');
+
+          // Fetch Dynamic Vocab from PocketBase
+          try {
+            const vocabRecords = await pb.collection('vocabulary').getFullList({ sort: 'created' });
+            VOCAB = vocabRecords.map(r => ({
+              id: r.id, 
+              de: r.word_de, 
+              en: r.word_en, 
+              bn: r.word_bn, 
+              g: r.g, 
+              cat: r.cat 
+            }));
+            window.renderVocab();
+          } catch(e) {
+            console.log("No vocab found or table missing.");
+            window.renderVocab();
+          }
+
           document.getElementById('loader').style.display = 'none';
 
-          // Check if previously logged in (Session persistence via localStorage)
+          // Check Session
           const savedUserId = localStorage.getItem('german_app_session_id');
           if(savedUserId) {
             try {
@@ -972,17 +985,9 @@
             }
           }
 
-          // Fetch Videos
-          try { 
-            const vids = await pb.collection('videos').getFullList({ sort: 'serial' }); 
-            window.renderVideos(vids); 
-          } catch(e) { console.log("Video collection empty or not accessible."); }
-
-          // Fetch Leaderboard from custom app_users collection
-          try { 
-            const users = await pb.collection('app_users').getFullList({ sort: '-streak' }); 
-            window.renderLeaderboard(users); 
-          } catch(e) { console.log("Leaderboard not accessible."); }
+          // Fetch Videos & Leaderboard
+          try { const vids = await pb.collection('videos').getFullList({ sort: 'serial' }); window.renderVideos(vids); } catch(e) {}
+          try { const users = await pb.collection('app_users').getFullList({ sort: '-streak' }); window.renderLeaderboard(users); } catch(e) {}
 
         } catch(err) {
           document.getElementById('loader').style.display = 'none';
