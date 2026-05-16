@@ -1,685 +1,970 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>EFL S4 – Print Generator</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.21.1/pocketbase.umd.min.js"></script>
-
-<style>
-/* ─── DESIGN TOKENS ──────────────────────────────────────────── */
-:root {
-  --bg:        #0b0d11;
-  --surface:   #13161d;
-  --border:    #1f2430;
-  --border2:   #2a3040;
-  --accent:    #e8c84a;
-  --accent2:   #4ae8a0;
-  --text:      #e2e6f0;
-  --muted:     #6b7385;
-  --danger:    #e84a4a;
-  --mono:      'IBM Plex Mono', monospace;
-  --sans:      'IBM Plex Sans', sans-serif;
-  --display:   'Bebas Neue', sans-serif;
-}
-
-/* ─── RESET ─────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  min-height: 100vh;
-}
-
-/* ─── SCREEN HEADER ─────────────────────────────────────────── */
-.app-header {
-  background: var(--surface);
-  border-bottom: 2px solid var(--accent);
-  padding: 0 32px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.app-header .logo { display: flex; align-items: baseline; gap: 10px; }
-.app-header .logo-main { font-family: var(--display); font-size: 28px; letter-spacing: 3px; color: var(--accent); line-height: 1; }
-.app-header .logo-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
-.app-header .badge { font-family: var(--mono); font-size: 10px; background: var(--border); color: var(--accent2); border: 1px solid var(--accent2); padding: 3px 10px; letter-spacing: 1.5px; }
-
-/* ─── CONTROLS PANEL ─────────────────────────────────────────── */
-.controls { background: var(--surface); border-bottom: 1px solid var(--border); padding: 28px 32px; display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
-.field-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 300px; }
-.field-group label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
-.field-group select { background: var(--bg); border: 1px solid var(--border2); color: var(--text); font-family: var(--mono); font-size: 13px; padding: 10px 14px; outline: none; transition: border-color 0.2s; appearance: none; cursor: pointer; }
-.field-group select:focus { border-color: var(--accent); }
-.select-wrapper { position: relative; }
-.select-wrapper::after { content: '▾'; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--accent); pointer-events: none; font-size: 14px; }
-
-.btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 24px; font-family: var(--mono); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
-.btn-primary { background: var(--accent); color: #000; font-weight: 600; }
-.btn-primary:hover { background: #f0d86a; transform: translateY(-1px); }
-.btn-primary:disabled { background: var(--border2); color: var(--muted); cursor: not-allowed; transform: none; }
-.btn-print { background: transparent; color: var(--accent2); border: 1px solid var(--accent2); }
-.btn-print:hover { background: var(--accent2); color: #000; }
-.btn-print:disabled { opacity: 0.3; cursor: not-allowed; }
-
-/* ─── STATUS BAR ─────────────────────────────────────────────── */
-.status-bar { display: flex; align-items: center; gap: 10px; padding: 10px 32px; background: var(--bg); border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); min-height: 38px; }
-.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
-.status-dot.loading { background: var(--accent); animation: pulse 1s infinite; }
-.status-dot.ok      { background: var(--accent2); }
-.status-dot.error   { background: var(--danger); }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-/* ─── PREVIEW WRAPPER ────────────────────────────────────────── */
-.preview-wrapper { padding: 32px; min-height: calc(100vh - 180px); }
-.preview-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; gap: 16px; color: var(--muted); font-family: var(--mono); font-size: 13px; border: 1px dashed var(--border2); }
-.preview-empty svg { opacity: 0.2; }
-.a4-preview-container { display: flex; flex-direction: column; align-items: center; gap: 24px; }
-
-/* For Screen Preview only */
-.a4-page-preview { background: #fff; width: 210mm; min-height: 297mm; box-shadow: 0 8px 60px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4); padding: 15mm; color: #000; position: relative; font-family: 'IBM Plex Sans', Arial, sans-serif; margin-bottom: 24px;}
-
-/* ─────────────────────────────────────────────────────────────── */
-/* PRINT DOCUMENT STYLES */
-/* ─────────────────────────────────────────────────────────────── */
-
-.form-doc { font-family: Arial, sans-serif; color: #000; font-size: 9pt; }
-
-/* === PAGE HEADER === */
-.form-page-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #000; padding-bottom: 8px; margin-bottom: 10px; gap: 10px; }
-.form-tournament-badge { background: #000; color: #fff; font-family: 'Bebas Neue', 'Arial Black', sans-serif; font-size: 18pt; letter-spacing: 3px; padding: 4px 14px; line-height: 1; white-space: nowrap; }
-.form-meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; flex: 1; }
-.form-meta-cell { border: 1px solid #000; padding: 4px 6px; }
-.form-meta-label { font-size: 6pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; }
-.form-meta-value { font-size: 9pt; font-weight: 600; margin-top: 2px; }
-
-/* === SCORE BLOCK === */
-.score-block { border: 2px solid #000; padding: 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #f8f8f8; }
-.score-team { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
-.score-team img { width: 56px; height: 56px; object-fit: contain; }
-.score-team-img-placeholder { width: 56px; height: 56px; border: 2px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 10pt; color: #999; background: #e2e8f0; border-radius: 50%; font-weight: bold;}
-.score-team-name { font-size: 11pt; font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: 1px; max-width: 120px; }
-
-.score-box-group { display: flex; align-items: center; gap: 8px; }
-.score-box { width: 36mm; height: 22mm; border: 3px solid #000; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 28pt; font-weight: 900; color: #ccc; }
-.score-separator { font-size: 24pt; font-weight: 900; }
-
-/* === SECTION TITLE === */
-.section-title { background: #000; color: #fff; font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; padding: 4px 8px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;}
-
-/* === AWARDS BLOCK === */
-.awards-block { margin-bottom: 10px; }
-.award-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 5px; }
-.award-num { font-size: 8pt; font-weight: 700; width: 20px; flex-shrink: 0; padding-bottom: 2px; }
-.award-label { font-size: 8pt; font-weight: 700; width: 90px; flex-shrink: 0; padding-bottom: 2px; }
-.award-line { flex: 1; border-bottom: 1px solid #000; height: 16px; }
-
-/* === TWO-COLUMN EVENTS GRID === */
-.events-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-.events-col { border: 1.5px solid #000; }
-.events-col-header { background: #1e293b; color: #fff; padding: 6px 8px; font-size: 9pt; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #000; }
-.events-col-header .team-crest { width: 24px; height: 24px; object-fit: contain; background: #fff; border-radius: 50%; padding: 2px; }
-.events-section { border-top: 1px solid #ddd; padding: 5px 8px; }
-.events-section:first-child { border-top: none; }
-.events-section-label { font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #333; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; background: #f1f5f9; padding: 4px; border-radius: 4px;}
-.blank-line { border-bottom: 1px solid #888; margin-bottom: 6px; height: 16px; display: flex; align-items: flex-end; padding-bottom: 1px; }
-.blank-line-num { font-size: 6.5pt; color: #666; width: 12px; flex-shrink: 0; }
-
-/* GK SAVES TALLY */
-.tally-box { border: 1px dashed #64748b; height: 35px; margin: 4px 0 6px; padding: 4px; font-size: 7.5pt; color: #94a3b8; font-style: italic;}
-.saves-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
-.saves-box { border: 1.5px solid #000; width: 32px; height: 22px; flex-shrink: 0; }
-.saves-label { font-size: 8pt; font-weight: 700; }
-
-/* === PENALTIES BLOCK === */
-.penalties-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-.penalty-col { border: 1.5px solid #000; }
-.penalty-col-header { background: #334155; color: #fff; padding: 5px 8px; font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
-.penalty-col-header img { width: 18px; height: 18px; background: #fff; border-radius: 50%; padding: 1px; }
-.penalty-inner { padding: 6px 8px; }
-.penalty-row { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 8px; }
-.penalty-label { font-size: 7.5pt; font-weight: 700; width: 65px; flex-shrink: 0; padding-bottom: 1px; }
-.penalty-line { flex: 1; border-bottom: 1px solid #000; height: 14px; }
-.penalty-scored-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-.penalty-scored-label { font-size: 7.5pt; font-weight: 700; }
-.checkbox-option { display: flex; align-items: center; gap: 4px; font-size: 7.5pt; font-weight: 600;}
-.print-checkbox { width: 12px; height: 12px; border: 1.5px solid #000; display: inline-block; flex-shrink: 0; }
-
-/* === PAGE 2 HEADERS === */
-.roster-page-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 12px; }
-.roster-page-title { font-family: 'Bebas Neue', 'Arial Black', sans-serif; font-size: 16pt; letter-spacing: 2px; }
-.roster-page-sub { font-size: 7.5pt; color: #555; }
-
-/* === SIDE BY SIDE ROSTER (COMPACT) === */
-.rosters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10mm; align-items: start; }
-.roster-section { margin-bottom: 0; border: 1px solid #000;}
-.roster-team-header { display: flex; align-items: center; gap: 8px; background: #0f172a; color: #fff; padding: 6px 8px; margin-bottom: 0; }
-.roster-team-header img { width: 24px; height: 24px; object-fit: contain; background: #fff; border-radius: 50%; padding: 2px;}
-.roster-team-name { font-size: 10pt; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-
-.roster-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
-.roster-table th { background: #e2e8f0; border: 1px solid #94a3b8; padding: 4px 6px; text-align: left; font-size: 6.5pt; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; color: #1e293b;}
-.roster-table td { border: 1px solid #ccc; padding: 3px 4px; vertical-align: middle; height: 26px; }
-.roster-table tr:nth-child(even) td { background: #f8fafc; }
-
-.player-photo-cell { width: 28px; text-align: center; }
-.player-photo { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1px solid #94a3b8; } 
-.player-photo-placeholder { width: 22px; height: 22px; border-radius: 50%; border: 1px dashed #94a3b8; background: #f1f5f9; display: inline-flex; align-items: center; justify-content: center; font-size: 7pt; color: #94a3b8; font-weight: bold;}
-
-.player-name-cell { font-weight: 700; font-size: 8pt; max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.check-cell { width: 75px; }
-.check-cell .checkbox-option { font-size: 6.5pt; margin-bottom: 2px; }
-
-
-/* ─── PRINT STYLES ───────────────────────────────────────────── */
-@media print {
-  @page { size: A4; margin: 10mm; } /* Reduced Margin to fit more content safely */
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>German Practice</title>
+  <!-- Favicon (German Flag) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇩🇪</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
-  body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
-  
-  /* Hide all screen UI */
-  .app-header, .controls, .status-bar, .preview-wrapper > .preview-empty, .btn-print { display: none !important; }
-  
-  /* Reset container for seamless flowing print */
-  .preview-wrapper { padding: 0 !important; background: #fff !important; }
-  .a4-preview-container { display: block; gap: 0; }
-  
-  /* Remove Forced Page Breaks & Blank Spaces */
-  .a4-page-preview { 
-      box-shadow: none !important; 
-      width: 100% !important; 
-      min-height: auto !important; 
-      padding: 0 !important; 
-      margin: 0 !important;
-      page-break-after: auto; /* FIXED: Lets the browser decide when to break */
-      break-after: auto; 
-  }
-  
-  /* Prevent cutting elements in half */
-  .roster-section, .events-col, .penalty-col, .score-block, .awards-block { 
-      page-break-inside: avoid; 
-      break-inside: avoid; 
-  }
-  
-  .form-doc * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .form-tournament-badge, .events-col-header, .roster-team-header, .section-title, .penalty-col-header { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-}
-</style>
+  <!-- PocketBase CDN ONLY -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.21.1/pocketbase.umd.min.js"></script>
+
+  <style>
+    /* ══════════════════════════════════════════════════════════════
+       GLOBAL STYLES & VARIABLES
+    ══════════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080c12; --surface: #0f1520; --card: #141c2b; --border: #1e2d45;
+      --text: #d4dde8; --muted: #5a7090; --accent: #f0c040; --accent2: #3b82f6;
+      --der: #3b9ae8; --die: #e8507a; --das: #38c984;
+      --verb: #a78bfa; --conj: #fb923c; --adv: #22d3ee; --pron: #f472b6; --adj: #facc15;
+      --font-head: 'Sora', sans-serif; --font-mono: 'DM Mono', monospace;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: var(--font-head); display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Modal Screens ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(8,12,18,0.9); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+    .modal-box { background: var(--surface); width: 90%; max-width: 400px; border-radius: 16px; border: 1px solid var(--border); padding: 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: center; max-height: 90vh; overflow-y: auto; }
+    
+    /* ── Sidebar ── */
+    .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 16px; flex-shrink: 0; z-index: 10; overflow-y: auto; transition: 0.3s; }
+    .sidebar-brand { font-size: 19px; font-weight: 700; color: var(--accent); padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; letter-spacing: -0.5px; }
+    .sidebar-brand span { color: var(--text); }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--muted); transition: 0.15s; border: 1px solid transparent; margin-bottom: 4px; }
+    .nav-item:hover { background: var(--card); color: var(--text); }
+    .nav-item.active { background: var(--card); color: var(--accent); border-color: var(--border); }
+    .nav-icon { font-size: 18px; width: 22px; text-align: center; }
+
+    .lang-toggle { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 8px; }
+    .lang-btn { flex: 1; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: var(--muted); font-family: var(--font-head); transition: 0.15s; }
+    .lang-btn.active { background: var(--accent); color: #000; }
+
+    .user-profile-btn { margin-top: auto; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; color: #fff; }
+    .user-profile-btn:hover { border-color: var(--accent); }
+
+    /* ── Main Area ── */
+    .main { flex: 1; padding: 32px 40px; overflow-y: auto; position: relative; }
+    .page { display: none; animation: fadeIn 0.3s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .page-header { margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .page-title { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+    .page-subtitle { font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+
+    /* ── Layout & Cards ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 14px; }
+    
+    .stat-card { position: relative; overflow: hidden; padding: 20px; }
+    .stat-card::before { content: ''; position: absolute; top:0; left:0; right:0; height:3px; }
+    .stat-val { font-size: 36px; font-weight: 700; color: #fff; font-family: var(--font-mono); margin-top: 8px; }
+    .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+
+    /* ── Form Elements ── */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border-radius: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer; border: none; font-family: var(--font-head); transition: 0.2s; }
+    .btn-accent { background: var(--accent); color: #000; }
+    .btn-accent:hover:not(:disabled) { background: #f5d060; }
+    .btn-accent:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-success { background: rgba(56,201,132,0.15); color: var(--das); border: 1px solid rgba(56,201,132,0.3); }
+    .btn-danger { background: rgba(232,80,122,0.15); color: var(--die); border: 1px solid rgba(232,80,122,0.3); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    .input { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 8px; font-family: var(--font-head); font-size: 14px; outline: none; transition: 0.2s; width: 100%; margin-bottom: 12px; }
+    .input:focus { border-color: var(--accent); }
+    .pill { padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: 0.15s; }
+    .pill.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+    /* ── Tables & Badges ── */
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 11px; text-transform: uppercase; color: var(--muted); padding: 12px; border-bottom: 1px solid var(--border); font-weight: 600; letter-spacing: 0.8px; }
+    td { padding: 12px; font-size: 14px; border-bottom: 1px solid rgba(30,45,69,0.5); }
+    
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-family: var(--font-mono); text-transform: uppercase; font-weight: 600; }
+    .b-der { background: rgba(59,154,232,0.15); color: var(--der); border: 1px solid rgba(59,154,232,0.3); }
+    .b-die { background: rgba(232,80,122,0.15); color: var(--die); border: 1px solid rgba(232,80,122,0.3); }
+    .b-das { background: rgba(56,201,132,0.15); color: var(--das); border: 1px solid rgba(56,201,132,0.3); }
+    .b-verb { background: rgba(167,139,250,0.15); color: var(--verb); border: 1px solid rgba(167,139,250,0.3); }
+    .b-noun { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid rgba(255,255,255,0.1); }
+    .c-der { color: var(--der); } .c-die { color: var(--die); } .c-das { color: var(--das); }
+    .vocab-de { font-family: var(--font-mono); font-weight: 500; font-size: 15px; }
+
+    /* ── Alphabet Hub ── */
+    .alpha-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 16px; }
+    .alpha-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; transition: 0.2s; display: flex; flex-direction: column; justify-content: center; }
+    .alpha-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .alpha-letter { font-size: 32px; font-weight: 700; color: #fff; font-family: var(--font-mono); cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;}
+    .alpha-letter:hover { color: var(--accent); }
+    .alpha-ipa { font-size: 13px; color: var(--accent); font-family: var(--font-mono); margin: 6px 0; }
+    .alpha-ex { font-size: 15px; color: var(--text); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: 0.2s;}
+    .alpha-ex:hover { color: var(--accent); }
+    .audio-btn { background: rgba(255,255,255,0.1); border: none; cursor: pointer; color: var(--text); font-size: 12px; padding: 4px; border-radius: 50%; transition: 0.2s; display: inline-flex; pointer-events: none;}
+    .alpha-tip { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.4; }
+
+    /* ── Word Certification Modal ── */
+    .cert-step { display: none; }
+    .cert-step.active { display: block; animation: fadeIn 0.3s; }
+    .cert-word { font-size: 32px; font-weight: 700; color: var(--accent); font-family: var(--font-mono); text-align: center; margin-bottom: 24px; }
+    .cert-feedback { padding: 12px; border-radius: 8px; font-weight: 600; text-align: center; margin-bottom: 16px; display: none; }
+
+    /* ── Flashcards ── */
+    .flashcard-scene { perspective: 1000px; width: 100%; max-width: 500px; height: 260px; margin: 0 auto; cursor: pointer; }
+    .flashcard-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.5s; }
+    .flashcard-inner.flipped { transform: rotateY(180deg); }
+    .flashcard-face { position: absolute; inset: 0; backface-visibility: hidden; background: var(--card); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+    .flashcard-back { transform: rotateY(180deg); background: rgba(240,192,64,0.05); border-color: rgba(240,192,64,0.3); }
+    
+    /* Loader & Utils */
+    #loader { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: var(--accent); font-size: 20px; font-weight: bold; }
+    .lang-en { display: inline; } .lang-bn { display: none; }
+    body.bn-mode .lang-en { display: none; } body.bn-mode .lang-bn { display: inline; }
+
+    /* Video Player */
+    .video-layout { display: flex; gap: 24px; height: calc(100vh - 160px); }
+    .video-player { flex: 1; background: #000; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .video-list { width: 340px; background: var(--surface); border-radius: 16px; border: 1px solid var(--border); padding: 16px; overflow-y: auto; }
+    .video-item { padding: 14px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; margin-bottom: 10px; transition: 0.2s; }
+    .video-item:hover { background: var(--card); }
+    .video-item.active { background: var(--card); border-color: var(--accent); }
+    .v-title { font-size: 14.5px; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.4; }
+    .v-meta { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+
+    /* AI Chat */
+    .chat-window { height: 400px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px 12px 0 0; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .msg { display: flex; gap: 12px; }
+    .msg-user { flex-direction: row-reverse; }
+    .msg-bubble { max-width: 75%; padding: 12px 16px; border-radius: 12px; font-size: 14.5px; line-height: 1.6; }
+    .msg-tutor .msg-bubble { background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 4px 12px 12px 12px; }
+    .msg-user .msg-bubble { background: rgba(240,192,64,0.15); border: 1px solid rgba(240,192,64,0.25); color: var(--text); border-radius: 12px 4px 12px 12px; }
+    .msg-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); }
+    
+    /* Toast Notification */
+    #toast { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: #000; padding: 12px 24px; border-radius: 8px; font-weight: bold; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 768px) {
+      .sidebar { width:70px; padding:16px 8px; }
+      .sidebar-brand span, .nav-label, .user-profile-btn { display:none; }
+      .sidebar-brand { font-size: 14px; text-align: center; }
+      .nav-item { justify-content:center; padding: 12px 0; }
+      .main { padding: 20px 16px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .video-layout { flex-direction: column; height: auto; }
+      .video-player { height: 250px; }
+      .video-list { width: 100%; height: 300px; }
+    }
+  </style>
 </head>
 <body>
 
-<header class="app-header">
-  <div class="logo">
-    <span class="logo-main">EFL S4</span>
-    <span class="logo-sub">Print Generator</span>
+  <!-- App Loader -->
+  <div id="loader">
+    <div style="font-size: 40px; margin-bottom: 20px;">🇩🇪</div>
+    <div id="loader-text">Connecting to System...</div>
   </div>
-  <span class="badge">REFEREE TOOL v4.1</span>
-</header>
 
-<div class="controls">
-  <div class="field-group">
-    <label>Select Fixture</label>
-    <div class="select-wrapper">
-      <select id="fixtureSelect">
-        <option value="">— Loading fixtures… —</option>
-      </select>
-    </div>
-  </div>
-  <button class="btn btn-primary" id="generateBtn" disabled>
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    Generate Printable Form
-  </button>
-  <button class="btn btn-print" id="printBtn" disabled onclick="window.print()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-    Print / Save PDF
-  </button>
-</div>
+  <!-- Toast Notification -->
+  <div id="toast">Message</div>
 
-<div class="status-bar">
-  <span class="status-dot" id="statusDot"></span>
-  <span id="statusText">Connecting to database…</span>
-</div>
-
-<div class="preview-wrapper">
-  <div class="preview-empty" id="emptyState">
-    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>
-    <span>Select a fixture and click <strong>Generate</strong> to preview the match form</span>
-  </div>
-  <div class="a4-preview-container" id="previewContainer"></div>
-</div>
-
-<script>
-const PB_URL = 'https://efljudb.duckdns.org';
-const pb = new PocketBase(PB_URL);
-
-const fixtureSelect = document.getElementById('fixtureSelect');
-const generateBtn   = document.getElementById('generateBtn');
-const printBtn      = document.getElementById('printBtn');
-const previewEl     = document.getElementById('previewContainer');
-const emptyState    = document.getElementById('emptyState');
-const statusDot     = document.getElementById('statusDot');
-const statusText    = document.getElementById('statusText');
-
-let fixturesMap = {};
-let teamsMap = {};
-
-function setStatus(msg, state = '') {
-  statusText.textContent = msg;
-  statusDot.className = 'status-dot' + (state ? ' ' + state : '');
-}
-
-function imgUrl(collectionId, recordId, fileName) {
-  if (!fileName) return null;
-  return `${PB_URL}/api/files/${collectionId}/${recordId}/${fileName}`;
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return 'TBD';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-}
-
-function blankLines(n, startNum = 1) {
-  let html = '';
-  for (let i = 0; i < n; i++) {
-    html += `<div class="blank-line"><span class="blank-line-num">${startNum + i}.</span></div>`;
-  }
-  return html;
-}
-
-function scoreTeamImg(url, teamName) {
-  let shortName = teamName ? teamName.substring(0, 3).toUpperCase() : 'TBD';
-  if (url) {
-    return `<img src="${url}" style="width:56px;height:56px;object-fit:contain;border-radius:50%;background:#fff;padding:2px;" onerror="this.outerHTML='<div class=\\'score-team-img-placeholder\\'>${shortName}</div>'" crossorigin="anonymous" />`;
-  }
-  return `<div class="score-team-img-placeholder">${shortName}</div>`;
-}
-
-// ── Fetch Fixtures & Teams ───────────────────────────────────────────────────
-async function loadFixtures() {
-  setStatus('Fetching fixtures and teams…', 'loading');
-  try {
-    const tRecords = await pb.collection('teams').getFullList();
-    tRecords.forEach(t => teamsMap[t.id] = t);
-
-    const records = await pb.collection('fixtures').getFullList({ sort: '-match_date' });
-
-    fixtureSelect.innerHTML = '<option value="">— Select a Fixture —</option>';
-    records.forEach(r => {
-      let t1Id = Array.isArray(r.team1) ? r.team1[0] : r.team1;
-      let t2Id = Array.isArray(r.team2) ? r.team2[0] : r.team2;
+  <!-- Authentication Modal -->
+  <div id="auth-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: -20px;">
+        <span style="cursor: pointer; color: var(--muted); font-size: 20px;" onclick="closeAuthModal()">✕</span>
+      </div>
+      <div style="font-size: 40px; margin-bottom: 16px;">🇩🇪</div>
+      <h2 style="margin-bottom: 8px;">Log In / Register</h2>
+      <p style="color: var(--muted); margin-bottom: 24px; font-size: 14px;">Sign in to track your progress. Only 5 digits needed!</p>
       
-      const t1 = teamsMap[t1Id] || { name: 'Team 1', crest_text: 'T1' };
-      const t2 = teamsMap[t2Id] || { name: 'Team 2', crest_text: 'T2' };
+      <input type="text" id="auth-username" class="input" placeholder="Username (no spaces preferred)" style="text-align: center;">
+      <input type="password" id="auth-password" class="input" placeholder="Password (min 5 chars)" style="text-align: center;" onkeydown="if(event.key==='Enter') handleLogin()">
       
-      const t1Name = t1.name || t1.crest_text || 'TBD';
-      const t2Name = t2.name || t2.crest_text || 'TBD';
-
-      const date = r.match_date ? new Date(r.match_date).toLocaleDateString('en-GB') : 'No Date';
-      const opt = document.createElement('option');
-      opt.value = r.id;
-      opt.textContent = `${t1Name} vs ${t2Name}  (${date})`;
-      fixtureSelect.appendChild(opt);
-      fixturesMap[r.id] = r;
-    });
-
-    generateBtn.disabled = false;
-    setStatus(`${records.length} fixtures loaded. Select one to begin.`, 'ok');
-  } catch (e) {
-    setStatus('Error loading data: ' + e.message, 'error');
-    console.error(e);
-  }
-}
-
-// ── Fetch Players for a Team ───────────────────────────────────────────────
-async function loadPlayers(teamId) {
-  if (!teamId) return [];
-  try {
-    const records = await pb.collection('players').getFullList({
-      filter: `team ~ "${teamId}" || team = "${teamId}"`,
-      sort: 'name',
-    });
-    return records;
-  } catch (e) {
-    console.warn('Could not load players for team', teamId, e);
-    return [];
-  }
-}
-
-// ── Build Player Row HTML ──────────────────────────────────────────────────
-function buildPlayerRow(player) {
-  const photoUrl = imgUrl(player.collectionId, player.id, player.avatar || player.photo || player.image);
-  let photoHtml = photoUrl 
-    ? `<img src="${photoUrl}" class="player-photo" onerror="this.outerHTML='<div class=\\'player-photo-placeholder\\'>${player.name.charAt(0)}</div>'" crossorigin="anonymous" />`
-    : `<div class="player-photo-placeholder">${player.name ? player.name.charAt(0) : '?'}</div>`;
-
-  const name = player.name || player.full_name || 'Unknown';
-
-  return `
-    <tr>
-      <td class="player-photo-cell">${photoHtml}</td>
-      <td class="player-name-cell">${name}</td>
-      <td class="check-cell">
-        <div class="checkbox-option"><span class="print-checkbox"></span> &lt;15m</div>
-        <div class="checkbox-option"><span class="print-checkbox"></span> DNP</div>
-      </td>
-    </tr>`;
-}
-
-// ── Build Roster Section HTML ──────────────────────────────────────────────
-function buildRosterSection(team, players) {
-  const teamName = team.name || team.crest_text || 'Unknown Team';
-  const logoUrl = imgUrl(team.collectionId, team.id, team.logo || team.crest || team.banner);
-  let logoHtml = logoUrl ? `<img src="${logoUrl}" crossorigin="anonymous" />` : `<div style="width:24px;height:24px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#000;font-weight:bold;font-size:8px;">${teamName.substring(0,3)}</div>`;
-
-  let rows = '';
-  if (players.length === 0) {
-    rows = `<tr><td colspan="3" style="padding:15px;text-align:center;color:#94a3b8;font-style:italic">No players found</td></tr>`;
-  } else {
-    players.forEach(p => { rows += buildPlayerRow(p); });
-  }
-
-  return `
-  <div class="roster-section">
-    <div class="roster-team-header">
-      ${logoHtml}
-      <span class="roster-team-name">${teamName}</span>
-    </div>
-    <table class="roster-table">
-      <thead>
-        <tr>
-          <th style="width:28px; text-align:center;">Pic</th>
-          <th>Player Name</th>
-          <th style="width:75px">Minutes</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  </div>`;
-}
-
-// ── Build Events Column HTML ───────────────────────────────────────────────
-function buildEventsCol(team) {
-  const teamName = team.name || team.crest_text || 'Team';
-  const logoUrl = imgUrl(team.collectionId, team.id, team.logo || team.crest || team.banner);
-  let logoHtml = logoUrl ? `<img src="${logoUrl}" class="team-crest" crossorigin="anonymous" />` : '';
-
-  return `
-  <div class="events-col">
-    <div class="events-col-header">
-      ${logoHtml}
-      <span>${teamName}</span>
-    </div>
-
-    <div class="events-section">
-      <div class="events-section-label"><span class="event-icon">⚽</span> Goals Scored</div>
-      ${blankLines(6)}
-    </div>
-
-    <div class="events-section">
-      <div class="events-section-label"><span class="event-icon">🎯</span> Assists Provided</div>
-      ${blankLines(6)}
-    </div>
-
-    <div class="events-section">
-      <div class="events-section-label"><span class="event-icon">🟨</span> Yellow Cards</div>
-      ${blankLines(4)}
-    </div>
-
-    <div class="events-section">
-      <div class="events-section-label"><span class="event-icon">🟥</span> Red Cards</div>
-      ${blankLines(2)}
-    </div>
-
-    <div class="events-section">
-      <div class="events-section-label"><span class="event-icon">🧤</span> Goalkeeper</div>
-      <div class="tally-box">Tally Marks (||||) for saves:</div>
-      <div class="saves-row">
-        <span class="saves-label">Total Saves Number:</span>
-        <div class="saves-box"></div>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ── Build Penalty Column HTML ──────────────────────────────────────────────
-function buildPenaltyCol(team) {
-  const teamName = team.name || team.crest_text || 'Team';
-  const logoUrl = imgUrl(team.collectionId, team.id, team.logo || team.crest || team.banner);
-  let logoHtml = logoUrl ? `<img src="${logoUrl}" crossorigin="anonymous" />` : '';
-
-  return `
-  <div class="penalty-col">
-    <div class="penalty-col-header">${logoHtml} ${teamName} — Penalty</div>
-    <div class="penalty-inner">
-      <div style="font-size: 7.5pt; color:#64748b; margin-bottom:8px; font-weight:600;">PENALTY 1</div>
-      <div class="penalty-row">
-        <span class="penalty-label">Earned By:</span>
-        <div class="penalty-line"></div>
-      </div>
-      <div class="penalty-row">
-        <span class="penalty-label">Taken By:</span>
-        <div class="penalty-line"></div>
-      </div>
-      <div class="penalty-scored-row" style="margin-bottom:12px; border-bottom: 1px dashed #ccc; padding-bottom:8px;">
-        <span class="penalty-scored-label">Scored Goal?</span>
-        <div class="checkbox-option"><span class="print-checkbox"></span> Yes</div>
-        <div class="checkbox-option"><span class="print-checkbox"></span> No</div>
+      <div style="display: flex; gap: 10px; margin-top: 12px;">
+        <button class="btn btn-outline" style="flex: 1;" onclick="handleRegister()" id="auth-reg-btn">Register</button>
+        <button class="btn btn-accent" style="flex: 1;" onclick="handleLogin()" id="auth-log-btn">Log In</button>
       </div>
 
-      <div style="font-size: 7.5pt; color:#64748b; margin-bottom:8px; font-weight:600;">PENALTY 2</div>
-      <div class="penalty-row">
-        <span class="penalty-label">Earned By:</span>
-        <div class="penalty-line"></div>
+      <!-- Enhanced Error Box for Debugging -->
+      <div id="auth-error" style="background: rgba(232,80,122,0.1); border: 1px solid var(--die); color: var(--die); padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 16px; display: none; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap;"></div>
+    </div>
+  </div>
+
+  <!-- Leaderboard Modal -->
+  <div id="leaderboard-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 500px;">
+      <div style="display: flex; justify-content: space-between; align-items:center; margin-bottom: 16px;">
+        <h2 style="margin:0;">🏆 Global Rank</h2>
+        <span style="cursor: pointer; color: var(--muted); font-size: 20px;" onclick="document.getElementById('leaderboard-modal').style.display='none'">✕</span>
       </div>
-      <div class="penalty-row">
-        <span class="penalty-label">Taken By:</span>
-        <div class="penalty-line"></div>
+      <table style="text-align: left;">
+        <thead><tr><th style="width: 60px;">Rank</th><th>User</th><th>Words</th></tr></thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Certification Modal (Word Test) -->
+  <div id="cert-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 500px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 16px; color: var(--muted); font-weight: 600;">
+        <span>Step <span id="cert-step-num">1</span> of 3</span>
+        <span style="cursor: pointer; font-size: 16px;" onclick="closeCertModal()">✕ Cancel</span>
       </div>
-      <div class="penalty-scored-row">
-        <span class="penalty-scored-label">Scored Goal?</span>
-        <div class="checkbox-option"><span class="print-checkbox"></span> Yes</div>
-        <div class="checkbox-option"><span class="print-checkbox"></span> No</div>
+      
+      <div class="cert-word" id="cert-target-word">---</div>
+      <div class="cert-feedback" id="cert-feedback"></div>
+
+      <!-- Step 1: Meaning -->
+      <div id="cert-step-1" class="cert-step active">
+        <p style="margin-bottom: 16px;">What does this mean? (English or Bangla)</p>
+        <input type="text" id="cert-input-1" class="input" placeholder="Type meaning..." onkeydown="if(event.key==='Enter') verifyCertStep(1)">
+        <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="verifyCertStep(1)">Check Meaning</button>
+      </div>
+
+      <!-- Step 2: Listening / Spelling -->
+      <div id="cert-step-2" class="cert-step">
+        <p style="margin-bottom: 16px;">Listen carefully and type the exact German word.</p>
+        <button class="btn btn-outline" style="width: 100%; margin-bottom: 16px; font-size: 20px;" onclick="speakCertWord()">🔊 Play Audio</button>
+        <input type="text" id="cert-input-2" class="input" placeholder="Type what you hear..." onkeydown="if(event.key==='Enter') verifyCertStep(2)">
+        <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="verifyCertStep(2)">Check Spelling</button>
+      </div>
+
+      <!-- Step 3: Usage / Gender -->
+      <div id="cert-step-3" class="cert-step">
+        <p style="margin-bottom: 16px;" id="cert-step3-instruction">Final check...</p>
+        <input type="text" id="cert-input-3" class="input" placeholder="..." onkeydown="if(event.key==='Enter') verifyCertStep(3)">
+        <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="verifyCertStep(3)">Confirm & Save</button>
+      </div>
+      
+      <!-- Success -->
+      <div id="cert-step-success" class="cert-step">
+        <div style="font-size: 60px; margin-bottom: 16px;">🎉</div>
+        <h3 style="color: var(--das); margin-bottom: 8px;">Word Mastered!</h3>
+        <p style="color: var(--muted); margin-bottom: 24px;">Saved securely to your database.</p>
+        <button class="btn btn-accent" style="width: 100%;" onclick="closeCertModal()">Continue</button>
       </div>
     </div>
-  </div>`;
-}
+  </div>
 
-// ── Main Generate Function ─────────────────────────────────────────────────
-async function generateForm() {
-  const fixtureId = fixtureSelect.value;
-  if (!fixtureId) { alert('Please select a fixture first.'); return; }
-
-  generateBtn.disabled = true;
-  generateBtn.textContent = 'Generating…';
-  setStatus('Building form…', 'loading');
-
-  const fixture = fixturesMap[fixtureId];
-  
-  let rawT1Id = fixture.team1;
-  let rawT2Id = fixture.team2;
-  if (Array.isArray(rawT1Id)) rawT1Id = rawT1Id[0];
-  if (Array.isArray(rawT2Id)) rawT2Id = rawT2Id[0];
-  if (typeof rawT1Id === 'object' && rawT1Id !== null) rawT1Id = rawT1Id.id;
-  if (typeof rawT2Id === 'object' && rawT2Id !== null) rawT2Id = rawT2Id.id;
-
-  const t1Data = fixture.expand?.team1 || teamsMap[rawT1Id] || { id: rawT1Id };
-  const t2Data = fixture.expand?.team2 || teamsMap[rawT2Id] || { id: rawT2Id };
-
-  const t1Id = t1Data.id;
-  const t2Id = t2Data.id;
-
-  const t1Logo = imgUrl(t1Data.collectionId || 'teams', t1Id, t1Data.logo || t1Data.crest || t1Data.banner);
-  const t2Logo = imgUrl(t2Data.collectionId || 'teams', t2Id, t2Data.logo || t2Data.crest || t2Data.banner);
-
-  setStatus('Fetching player rosters…', 'loading');
-  
-  let t1Players = [];
-  let t2Players = [];
-  
-  let filterQuery = [];
-  if (t1Id) filterQuery.push(`team="${t1Id}"`);
-  if (t2Id) filterQuery.push(`team="${t2Id}"`);
-  
-  if (filterQuery.length > 0) {
-      try {
-          const players = await pb.collection('players').getFullList({
-              filter: filterQuery.join(' || '),
-              sort: 'name'
-          });
-          
-          t1Players = players.filter(p => {
-              let pTeam = Array.isArray(p.team) ? p.team[0] : p.team;
-              return pTeam === t1Id;
-          });
-          
-          t2Players = players.filter(p => {
-              let pTeam = Array.isArray(p.team) ? p.team[0] : p.team;
-              return pTeam === t2Id;
-          });
-      } catch (e) {
-          console.error("Error fetching players:", e);
-      }
-  }
-
-  const matchDate = formatDate(fixture.match_date || fixture.date);
-  const matchType = fixture.match_type || fixture.type || fixture.stage || 'League Match';
-  const venue     = fixture.venue || fixture.location || 'Central Field';
-  
-  const t1Name    = t1Data.name || t1Data.crest_text || 'Team 1';
-  const t2Name    = t2Data.name || t2Data.crest_text || 'Team 2';
-
-  // Everything is wrapped in ONE flowing container now
-  const outputHTML = `
-  <div class="a4-page-preview form-doc">
-
-    <!-- Page Header -->
-    <div class="form-page-header">
-      <div class="form-tournament-badge">EFL SEASON 4</div>
-      <div class="form-meta-grid">
-        <div class="form-meta-cell">
-          <div class="form-meta-label">Match Date</div>
-          <div class="form-meta-value">${matchDate}</div>
-        </div>
-        <div class="form-meta-cell">
-          <div class="form-meta-label">Match Type</div>
-          <div class="form-meta-value">${matchType}</div>
-        </div>
-        <div class="form-meta-cell">
-          <div class="form-meta-label">Venue</div>
-          <div class="form-meta-value">${venue}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Score Block -->
-    <div class="score-block">
-      <div class="score-team">
-        ${scoreTeamImg(t1Logo, t1Name)}
-        <div class="score-team-name">${t1Name}</div>
-      </div>
-      <div class="score-box-group">
-        <div class="score-box">—</div>
-        <div class="score-separator">:</div>
-        <div class="score-box">—</div>
-      </div>
-      <div class="score-team">
-        ${scoreTeamImg(t2Logo, t2Name)}
-        <div class="score-team-name">${t2Name}</div>
-      </div>
-    </div>
-
-    <!-- Match Awards -->
-    <div class="awards-block">
-      <div class="section-title">🏆 Match Awards</div>
-      <div style="padding:6px 4px">
-        <div class="award-row">
-          <span class="award-num">🥇</span>
-          <span class="award-label">Player of the Match</span>
-          <div class="award-line"></div>
-          <span style="font-size:7.5pt;color:#64748b;margin-left:8px;white-space:nowrap;font-weight:600;">Team: _______________</span>
-        </div>
-        <div class="award-row">
-          <span class="award-num">🥈</span>
-          <span class="award-label">2nd Best Player</span>
-          <div class="award-line"></div>
-          <span style="font-size:7.5pt;color:#64748b;margin-left:8px;white-space:nowrap;font-weight:600;">Team: _______________</span>
-        </div>
-        <div class="award-row">
-          <span class="award-num">🥉</span>
-          <span class="award-label">3rd Best Player</span>
-          <div class="award-line"></div>
-          <span style="font-size:7.5pt;color:#64748b;margin-left:8px;white-space:nowrap;font-weight:600;">Team: _______________</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Events Grid -->
-    <div class="section-title">📋 Match Events</div>
-    <div class="events-grid" style="margin-top:6px">
-      ${buildEventsCol(t1Data)}
-      ${buildEventsCol(t2Data)}
-    </div>
-
-    <!-- Penalties -->
-    <div class="section-title">⚡ Penalty Shootout / Spot Kicks</div>
-    <div class="penalties-grid" style="margin-top:6px">
-      ${buildPenaltyCol(t1Data)}
-      ${buildPenaltyCol(t2Data)}
-    </div>
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">German<span>Practice</span></div>
     
-    <hr style="margin: 20px 0; border: 1px dashed #ccc;">
+    <div class="nav-item active" onclick="nav('dashboard')"><span class="nav-icon">🏠</span> <span class="nav-label"><span class="lang-en">Dashboard</span><span class="lang-bn">ড্যাশবোর্ড</span></span></div>
+    <div class="nav-item" onclick="nav('vocab')"><span class="nav-icon">📚</span> <span class="nav-label"><span class="lang-en">Vocab Tracker</span><span class="lang-bn">শব্দভাণ্ডার</span></span></div>
+    <div class="nav-item" onclick="nav('videos')"><span class="nav-icon">📺</span> <span class="nav-label"><span class="lang-en">Video Courses</span><span class="lang-bn">ভিডিও কোর্স</span></span></div>
+    <div class="nav-item" onclick="nav('alphabet')"><span class="nav-icon">🔤</span> <span class="nav-label"><span class="lang-en">Alphabet Hub</span><span class="lang-bn">বর্ণমালা হাব</span></span></div>
+    <div class="nav-item" onclick="nav('bridge')"><span class="nav-icon">🌉</span> <span class="nav-label"><span class="lang-en">Grammar Bridge</span><span class="lang-bn">গ্রামার ব্রিজ</span></span></div>
+    <div class="nav-item" onclick="handleProtectedNav('practice')"><span class="nav-icon">✍️</span> <span class="nav-label"><span class="lang-en">My Words</span><span class="lang-bn">আমার শব্দ (লগইন)</span></span></div>
+    <div class="nav-item" onclick="handleProtectedNav('flashcards')"><span class="nav-icon">🃏</span> <span class="nav-label"><span class="lang-en">Flashcards</span><span class="lang-bn">ফ্ল্যাশকার্ড (লগইন)</span></span></div>
+    <div class="nav-item" onclick="nav('chat')"><span class="nav-icon">🤖</span> <span class="nav-label"><span class="lang-en">AI Tutor</span><span class="lang-bn">এআই টিউটর</span></span></div>
 
-    <!-- Roster Header -->
-    <div class="roster-page-header">
-      <div>
-        <div class="roster-page-title">Player Minutes Record</div>
-        <div class="roster-page-sub">EFL Season 4 · ${t1Name} vs ${t2Name}</div>
+    <!-- User & Language Toggle -->
+    <div style="margin-top: auto;">
+      <div id="user-profile-widget" class="user-profile-btn" onclick="openAuthModal()">
+        👤 Log In / Register
       </div>
-      <div style="font-size:7pt;color:#475569;text-align:right;font-weight:600;background:#f1f5f9;padding:6px;border:1px solid #cbd5e1;line-height:1.4;">
-        Mark <strong style="color:#000;">[&lt;15m]</strong> for players on pitch under 15 mins<br>
-        Mark <strong style="color:#000;">[DNP]</strong> for players who did not participate at all
+      <div style="font-size:11px; color:var(--muted); text-align:center; margin:12px 0 6px; text-transform:uppercase;">Language / ভাষা</div>
+      <div class="lang-toggle">
+        <button id="btn-en" class="lang-btn active" onclick="setLang('en')">EN</button>
+        <button id="btn-bn" class="lang-btn" onclick="setLang('bn')">বাংলা</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── MAIN CONTENT ── -->
+  <main class="main">
+    
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">🏠 <span class="lang-en">Dashboard</span><span class="lang-bn">ড্যাশবোর্ড</span></h1>
+          <p class="page-subtitle"><span class="lang-en">Welcome,</span> <span id="dash-username" style="color: #fff; font-weight: bold;">Guest</span>! <span id="dash-prompt">Explore the app or log in to track your B1 journey.</span></p>
+        </div>
+        <button class="btn btn-outline" onclick="document.getElementById('leaderboard-modal').style.display='flex'">🏆 View Global Rank</button>
+      </div>
+      <div class="grid-3" style="margin-bottom: 24px;">
+        <div class="card stat-card" style="border-top: 3px solid var(--accent)">
+          <div class="stat-label">Words Learned</div>
+          <div class="stat-val" id="stat-words">0</div>
+          <div class="stat-sub">of 3000 (B1 Target)</div>
+        </div>
+        <div class="card stat-card" style="border-top: 3px solid var(--der)">
+          <div class="stat-label">Day Streak</div>
+          <div class="stat-val" id="stat-streak">0</div>
+          <div class="stat-sub">Log in to track</div>
+        </div>
+        <div class="card stat-card" style="border-top: 3px solid var(--die)">
+          <div class="stat-label">Global Rank</div>
+          <div class="stat-val" id="stat-rank">-</div>
+          <div class="stat-sub">Check Leaderboard</div>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card" style="cursor:pointer;" onclick="nav('vocab')">
+          <div style="font-size:28px; margin-bottom:12px;">📚</div>
+          <div style="font-weight:600; font-size:15px; color:#fff; margin-bottom:4px;">Vocab Tracker</div>
+          <div style="font-size:13px; color:var(--muted)">Explore high-frequency words</div>
+        </div>
+        <div class="card" style="cursor:pointer;" onclick="nav('videos')">
+          <div style="font-size:28px; margin-bottom:12px;">📺</div>
+          <div style="font-weight:600; font-size:15px; color:#fff; margin-bottom:4px;">Video Courses</div>
+          <div style="font-size:13px; color:var(--muted)">Watch curated lessons</div>
+        </div>
+        <div class="card" style="cursor:pointer;" onclick="nav('alphabet')">
+          <div style="font-size:28px; margin-bottom:12px;">🔤</div>
+          <div style="font-weight:600; font-size:15px; color:#fff; margin-bottom:4px;">Alphabet Hub</div>
+          <div style="font-size:13px; color:var(--muted)">Listen to pronunciation</div>
+        </div>
       </div>
     </div>
 
-    <!-- Compact Side by Side Grid -->
-    <div class="rosters-grid">
-        ${buildRosterSection(t1Data, t1Players)}
-        ${buildRosterSection(t2Data, t2Players)}
+    <!-- VOCAB TRACKER -->
+    <div id="page-vocab" class="page">
+      <div class="page-header">
+        <h1 class="page-title">📚 <span class="lang-en">Vocab Tracker</span><span class="lang-bn">শব্দভাণ্ডার ট্র্যাকার</span></h1>
+        <p class="page-subtitle">Browse all words. Log in to take the certification test and save them.</p>
+      </div>
+      <div style="display:flex; gap:12px; margin-bottom: 20px;">
+        <input type="text" id="search-input" class="input" placeholder="Search German or English..." style="max-width: 300px; margin-bottom:0;">
+        <div style="display:flex; gap:6px;" id="cat-filters">
+          <button class="pill active" onclick="setVocabFilter('all')">All</button>
+          <button class="pill" onclick="setVocabFilter('noun')">Noun</button>
+          <button class="pill" onclick="setVocabFilter('verb')">Verb</button>
+          <button class="pill" onclick="setVocabFilter('adjective')">Adj</button>
+          <button class="pill" onclick="setVocabFilter('conjunction')">Conj</button>
+          <button class="pill" onclick="setVocabFilter('adverb')">Adv</button>
+        </div>
+      </div>
+      <div class="card" style="padding: 0;">
+        <table>
+          <thead><tr><th style="width:50px">#</th><th>German</th><th>Translation</th><th>Type</th><th style="text-align: center; width:140px;">Action</th></tr></thead>
+          <tbody id="vocab-body"></tbody>
+        </table>
+      </div>
     </div>
 
-  </div>`;
+    <!-- MY WORDS (Protected) -->
+    <div id="page-practice" class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">✍️ <span class="lang-en">My Words & Practice</span><span class="lang-bn">আমার শব্দ ও অনুশীলন</span></h1>
+          <p class="page-subtitle">Your certified words organized by date.</p>
+        </div>
+        <button class="btn btn-accent" onclick="startRandomPractice()">🎲 Random Practice Test</button>
+      </div>
+      <div id="my-words-container"></div>
+    </div>
 
-  emptyState.style.display = 'none';
-  previewEl.innerHTML = outputHTML;
-  printBtn.disabled = false;
-  generateBtn.disabled = false;
-  generateBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Generate Printable Form`;
-  setStatus(`Form generated: ${t1Name} vs ${t2Name} · ${t1Players.length + t2Players.length} players loaded`, 'ok');
-}
+    <!-- FLASHCARDS (Protected) -->
+    <div id="page-flashcards" class="page">
+      <div class="page-header">
+        <h1 class="page-title">🃏 <span class="lang-en">Flashcards</span><span class="lang-bn">ফ্ল্যাশকার্ড</span></h1>
+        <p class="page-subtitle">Memory practice from your certified words.</p>
+      </div>
+      <div class="flashcard-scene" onclick="toggleFlashcard()">
+        <div class="flashcard-inner" id="fc-inner">
+          <div class="flashcard-face">
+            <div class="f-word" id="fc-front" style="font-size: 32px; font-weight: 700; color: #fff; font-family: var(--font-mono);">---</div>
+            <div style="font-size: 13px; color: var(--muted); margin-top: 12px;">Click to flip</div>
+          </div>
+          <div class="flashcard-face flashcard-back">
+            <div style="font-size: 24px; font-weight: 600; color: var(--accent);" id="fc-back">---</div>
+            <div style="font-size: 16px; color: var(--muted); margin-top: 8px;" id="fc-bn">---</div>
+            <div style="font-size: 14px; color: var(--text); margin-top: 16px; font-style: italic;" id="fc-ex">---</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:center; gap:12px; margin-top:30px;">
+        <button class="btn btn-outline" onclick="navFlashcard(-1)">← Prev</button>
+        <button class="btn btn-outline" onclick="navFlashcard(1)">Next →</button>
+      </div>
+    </div>
 
-generateBtn.addEventListener('click', generateForm);
+    <!-- ALPHABET HUB -->
+    <div id="page-alphabet" class="page">
+      <div class="page-header">
+        <h1 class="page-title">🔤 <span class="lang-en">Alphabet Hub</span><span class="lang-bn">বর্ণমালা হাব</span></h1>
+        <p class="page-subtitle">German Alphabet with IPA & pronunciation tips. Click the letter or the word to hear the pronunciation.</p>
+      </div>
+      <div style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-bottom: 12px;">Base Alphabet</div>
+      <div class="alpha-grid" id="alpha-base-grid" style="margin-bottom: 30px;"></div>
+      
+      <div style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-bottom: 12px;">Umlauts & Special Characters</div>
+      <div class="alpha-grid" id="alpha-special-grid" style="margin-bottom: 30px;"></div>
+    </div>
 
-fixtureSelect.addEventListener('change', () => {
-  generateBtn.disabled = !fixtureSelect.value;
-  if (!fixtureSelect.value) {
-    printBtn.disabled = true;
-    previewEl.innerHTML = '';
-    emptyState.style.display = 'flex';
-  }
-});
+    <!-- GRAMMAR BRIDGE -->
+    <div id="page-bridge" class="page">
+      <div class="page-header"><h1 class="page-title">🌉 Grammar Bridge</h1></div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">📌 Rule #1 — Verb-Second (V2) Position</div>
+        <p style="font-size:13.5px; color:var(--muted); margin-bottom:16px; line-height:1.7;">In German main clauses, the conjugated verb is <strong>always</strong> in the second position.</p>
+        <div class="grid-2">
+          <div style="background:var(--surface); padding:16px; border-radius:8px;">
+            <div style="font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase;">🇬🇧 English</div>
+            <div style="color:#fff; font-family:var(--font-mono); margin-bottom:8px;">I go to school every day.</div>
+            <div style="color:#fff; font-family:var(--font-mono);">Every day I go to school.</div>
+          </div>
+          <div style="background:var(--surface); padding:16px; border-radius:8px; border-left:3px solid var(--accent);">
+            <div style="font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase;">🇩🇪 German</div>
+            <div style="color:#fff; font-family:var(--font-mono); margin-bottom:8px;">Ich <span style="color:var(--accent)">gehe</span> jeden Tag zur Schule.</div>
+            <div style="color:#fff; font-family:var(--font-mono);">Jeden Tag <span style="color:var(--accent)">gehe</span> ich zur Schule.</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-loadFixtures();
-</script>
+    <!-- VIDEOS -->
+    <div id="page-videos" class="page">
+      <div class="page-header"><h1 class="page-title">📺 Video Courses</h1></div>
+      <div class="video-layout">
+        <div class="video-player"><iframe id="vid-iframe" style="width: 100%; height: 100%; border: none;" src="" allowfullscreen></iframe></div>
+        <div class="video-list" id="video-list-container"></div>
+      </div>
+    </div>
 
+    <!-- AI CHAT -->
+    <div id="page-chat" class="page">
+      <div class="page-header"><h1 class="page-title">🤖 AI Tutor Chat</h1></div>
+      <div class="chat-window" id="chat-window">
+        <div class="msg msg-tutor"><div class="msg-avatar">🎓</div><div class="msg-bubble">🇩🇪 Hallo! Ich bin Klaus, dein Deutschlehrer. Wie geht es dir heute?</div></div>
+      </div>
+      <div style="display: flex; gap: 10px; background: var(--card); border: 1px solid var(--border); border-top: none; border-radius: 0 0 12px 12px; padding: 16px;">
+        <input type="text" id="chat-input" class="input" style="flex:1; margin:0;" placeholder="Type in German..." onkeydown="if(event.key==='Enter') window.sendChat()">
+        <button class="btn btn-accent" onclick="window.sendChat()">Send ↑</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       DATA & JAVASCRIPT LOGIC (ONLY PocketBase)
+  ══════════════════════════════════════════════════════════════ -->
+  <script>
+    // --- Data: Detailed Alphabet Array ---
+    const ALPHABET = [
+      { letter:"A a", ipa:"/aː/", ex:"Apfel", tip:"Like 'ah' in father", special:false },
+      { letter:"B b", ipa:"/beː/", ex:"Ball", tip:"Same as English B", special:false },
+      { letter:"C c", ipa:"/tseː/", ex:"Café", tip:"'ts' before e/i, else 'k'", special:false },
+      { letter:"D d", ipa:"/deː/", ex:"Danke", tip:"Same as English D", special:false },
+      { letter:"E e", ipa:"/eː/", ex:"Essen", tip:"Like 'eh' in bed", special:false },
+      { letter:"F f", ipa:"/ɛf/", ex:"Fisch", tip:"Same as English F", special:false },
+      { letter:"G g", ipa:"/ɡeː/", ex:"Gut", tip:"Always hard G", special:false },
+      { letter:"H h", ipa:"/haː/", ex:"Haus", tip:"Aspirated at word start", special:false },
+      { letter:"I i", ipa:"/iː/", ex:"Igel", tip:"Like 'ee' in see", special:false },
+      { letter:"J j", ipa:"/jɔt/", ex:"Jahr", tip:"Like English Y", special:false },
+      { letter:"K k", ipa:"/kaː/", ex:"Kind", tip:"Same as English K", special:false },
+      { letter:"L l", ipa:"/ɛl/", ex:"Licht", tip:"Clear light L", special:false },
+      { letter:"M m", ipa:"/ɛm/", ex:"Mutter", tip:"Same as English M", special:false },
+      { letter:"N n", ipa:"/ɛn/", ex:"Nacht", tip:"Same as English N", special:false },
+      { letter:"O o", ipa:"/oː/", ex:"Ohr", tip:"Pure 'oh', no glide", special:false },
+      { letter:"P p", ipa:"/peː/", ex:"Post", tip:"Same as English P", special:false },
+      { letter:"Q q", ipa:"/kuː/", ex:"Quelle", tip:"Always 'kv' sound", special:false },
+      { letter:"R r", ipa:"/ɛʁ/", ex:"Rot", tip:"Guttural, throat vibration", special:false },
+      { letter:"S s", ipa:"/ɛs/", ex:"Sonne", tip:"'z' before vowels, else 's'", special:false },
+      { letter:"T t", ipa:"/teː/", ex:"Tag", tip:"Same as English T", special:false },
+      { letter:"U u", ipa:"/uː/", ex:"Uhr", tip:"Like 'oo' in moon", special:false },
+      { letter:"V v", ipa:"/faʊ/", ex:"Vogel", tip:"Usually 'f', rarely 'v'", special:false },
+      { letter:"W w", ipa:"/veː/", ex:"Wasser", tip:"Like English V sound", special:false },
+      { letter:"X x", ipa:"/ɪks/", ex:"Xylophon", tip:"Like 'ks' sound", special:false },
+      { letter:"Y y", ipa:"/ʏpsɪlɔn/", ex:"Yoga", tip:"Like German Ü in loanwords", special:false },
+      { letter:"Z z", ipa:"/tsɛt/", ex:"Zeit", tip:"Always 'ts' — never 'z'!", special:false },
+      { letter:"Ä ä", ipa:"/ɛː/", ex:"Äpfel", tip:"Like 'e' in bed, but longer", special:true },
+      { letter:"Ö ö", ipa:"/øː/", ex:"Öl", tip:"Say 'e' with rounded lips", special:true },
+      { letter:"Ü ü", ipa:"/yː/", ex:"Über", tip:"Say 'ee' with rounded lips", special:true },
+      { letter:"ß", ipa:"/sː/", ex:"Straße", tip:"Sharp double-S, no buzz", special:true }
+    ];
+
+    // --- Data: Detailed Vocab Array (50 words) ---
+    const VOCAB = [
+      { id:1, de:"ich", en:"I", bn:"আমি", g:null, cat:"pronoun" },
+      { id:2, de:"sein", en:"to be", bn:"হওয়া", g:null, cat:"verb" },
+      { id:3, de:"haben", en:"to have", bn:"রাখা", g:null, cat:"verb" },
+      { id:4, de:"werden", en:"will / become", bn:"হবে", g:null, cat:"verb" },
+      { id:5, de:"können", en:"can / be able", bn:"পারা", g:null, cat:"verb" },
+      { id:6, de:"der Mann", en:"man", bn:"পুরুষ", g:"der", cat:"noun" },
+      { id:7, de:"die Frau", en:"woman", bn:"মহিলা", g:"die", cat:"noun" },
+      { id:8, de:"das Kind", en:"child", bn:"শিশু", g:"das", cat:"noun" },
+      { id:9, de:"die Zeit", en:"time", bn:"সময়", g:"die", cat:"noun" },
+      { id:10, de:"das Jahr", en:"year", bn:"বছর", g:"das", cat:"noun" },
+      { id:11, de:"der Tag", en:"day", bn:"দিন", g:"der", cat:"noun" },
+      { id:12, de:"die Hand", en:"hand", bn:"হাত", g:"die", cat:"noun" },
+      { id:13, de:"der Mensch", en:"person/human", bn:"মানুষ", g:"der", cat:"noun" },
+      { id:14, de:"das Haus", en:"house", bn:"বাড়ি", g:"das", cat:"noun" },
+      { id:15, de:"die Welt", en:"world", bn:"পৃথিবী", g:"die", cat:"noun" },
+      { id:16, de:"das Wasser", en:"water", bn:"পানি", g:"das", cat:"noun" },
+      { id:17, de:"der Weg", en:"way / path", bn:"পথ", g:"der", cat:"noun" },
+      { id:18, de:"die Schule", en:"school", bn:"বিদ্যালয়", g:"die", cat:"noun" },
+      { id:19, de:"das Buch", en:"book", bn:"বই", g:"das", cat:"noun" },
+      { id:20, de:"die Stadt", en:"city", bn:"শহর", g:"die", cat:"noun" },
+      { id:21, de:"der Vater", en:"father", bn:"বাবা", g:"der", cat:"noun" },
+      { id:22, de:"die Mutter", en:"mother", bn:"মা", g:"die", cat:"noun" },
+      { id:23, de:"das Geld", en:"money", bn:"টাকা", g:"das", cat:"noun" },
+      { id:24, de:"der Name", en:"name", bn:"নাম", g:"der", cat:"noun" },
+      { id:25, de:"die Arbeit", en:"work / job", bn:"কাজ", g:"die", cat:"noun" },
+      { id:26, de:"gut", en:"good", bn:"ভালো", g:null, cat:"adjective" },
+      { id:27, de:"groß", en:"big / great", bn:"বড়", g:null, cat:"adjective" },
+      { id:28, de:"alt", en:"old", bn:"পুরনো", g:null, cat:"adjective" },
+      { id:29, de:"neu", en:"new", bn:"নতুন", g:null, cat:"adjective" },
+      { id:30, de:"klein", en:"small", bn:"ছোট", g:null, cat:"adjective" },
+      { id:31, de:"schön", en:"beautiful", bn:"সুন্দর", g:null, cat:"adjective" },
+      { id:32, de:"schnell", en:"fast", bn:"দ্রুত", g:null, cat:"adjective" },
+      { id:33, de:"wichtig", en:"important", bn:"গুরুত্বপূর্ণ", g:null, cat:"adjective" },
+      { id:34, de:"und", en:"and", bn:"এবং", g:null, cat:"conjunction" },
+      { id:35, de:"oder", en:"or", bn:"অথবা", g:null, cat:"conjunction" },
+      { id:36, de:"aber", en:"but", bn:"কিন্তু", g:null, cat:"conjunction" },
+      { id:37, de:"weil", en:"because", bn:"কারণ", g:null, cat:"conjunction" },
+      { id:38, de:"dass", en:"that (conj.)", bn:"যে", g:null, cat:"conjunction" },
+      { id:39, de:"nicht", en:"not", bn:"না", g:null, cat:"adverb" },
+      { id:40, de:"auch", en:"also / too", bn:"ও / এছাড়া", g:null, cat:"adverb" },
+      { id:41, de:"jetzt", en:"now", bn:"এখন", g:null, cat:"adverb" },
+      { id:42, de:"hier", en:"here", bn:"এখানে", g:null, cat:"adverb" },
+      { id:43, de:"noch", en:"still / yet", bn:"এখনও", g:null, cat:"adverb" },
+      { id:44, de:"schon", en:"already", bn:"ইতিমধ্যে", g:null, cat:"adverb" },
+      { id:45, de:"so", en:"so / thus", bn:"তাই", g:null, cat:"adverb" },
+      { id:46, de:"wie", en:"how / like", bn:"কিভাবে", g:null, cat:"adverb" },
+      { id:47, de:"was", en:"what", bn:"কি", g:null, cat:"pronoun" },
+      { id:48, de:"wer", en:"who", bn:"কে", g:null, cat:"pronoun" },
+      { id:49, de:"wo", en:"where", bn:"কোথায়", g:null, cat:"adverb" },
+      { id:50, de:"warum", en:"why", bn:"কেন", g:null, cat:"adverb" }
+    ];
+
+    // --- State ---
+    let learnedWordsMap = new Map();
+    let currentLang = 'en';
+    let vSearch = "", vCat = "all";
+    let isLoggedIn = false;
+    let currentUsername = "";
+    let certWordId = null;
+    let certStep = 1;
+    let isRandomPractice = false;
+
+    // --- Initialize PocketBase ---
+    let pb = null;
+    // Magic String to bypass PocketBase 8 char password limit securely
+    const PB_PASS_PADDING = "_PdB26!"; 
+
+    // --- UI Helpers ---
+    window.showToast = function(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => { toast.classList.remove('show'); }, 3000);
+    };
+
+    window.nav = function(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + pageId).classList.add('active');
+      event.currentTarget.classList.add('active');
+    };
+
+    window.handleProtectedNav = function(pageId) {
+      if(!isLoggedIn) { 
+        window.showToast("Please log in to access this feature."); 
+        window.openAuthModal(); 
+      } else { 
+        window.nav(pageId); 
+        if(pageId === 'practice') window.nextPracticeWord(); 
+        if(pageId === 'flashcards') window.renderFlashcardUI(); 
+      }
+    };
+
+    window.setLang = function(lang) {
+      currentLang = lang; document.body.className = lang === 'bn' ? 'bn-mode' : '';
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-' + lang).classList.add('active');
+      window.renderVocab(); if(isLoggedIn) window.renderMyWords();
+    };
+
+    window.openAuthModal = function() {
+      if(isLoggedIn) {
+        dbLogout();
+      } else { 
+        document.getElementById('auth-modal').style.display = 'flex'; 
+        document.getElementById('auth-error').style.display = 'none';
+        document.getElementById('auth-username').value = '';
+        document.getElementById('auth-password').value = '';
+      }
+    };
+    
+    window.closeAuthModal = function() { document.getElementById('auth-modal').style.display = 'none'; };
+
+    // --- Error Catcher System ---
+    function parsePbError(err) {
+      // 🚨 STATUS 0 means the browser BLOCKED the request before reaching the server!
+      if (err.status === 0) {
+        return "সার্ভার কানেকশন ব্লকড! (ClientResponseError 0)\nআপনার ব্রাউজারের অ্যাডব্লকার (Adblocker/Brave Shields) বন্ধ করুন, অথবা আপনার PocketBase সার্ভারের CORS/SSL সেটিং ঠিক নেই।";
+      }
+      
+      let errMsg = "ব্যর্থ হয়েছে!";
+      if (err.data && err.data.data) {
+        const issues = Object.keys(err.data.data).map(k => `${k} -> ${err.data.data[k].message}`).join(', ');
+        if(issues) errMsg += "\nকারণ: " + issues;
+      } else if (err.message) {
+        errMsg += "\n" + err.message;
+      }
+      
+      if(err.status === 400 || err.status === 403) {
+        errMsg += "\n(নোট: আপনার PocketBase এর 'usersd' টেবিলের API Rules-এ 'Create' অপশনটি ফাঁকা (\"\") করা আছে কিনা চেক করুন!)";
+      }
+      return errMsg;
+    }
+
+    // --- Register Logic with EXPLICIT Error Details ---
+    window.handleRegister = async function() {
+      if(!pb) return window.showToast("Database not initialized yet.");
+      const btn = document.getElementById('auth-reg-btn'); 
+      const unameRaw = document.getElementById('auth-username').value.trim();
+      const passRaw = document.getElementById('auth-password').value.trim();
+      const errBox = document.getElementById('auth-error');
+      
+      if(!unameRaw) return window.showToast("Username required.");
+      if(passRaw.length < 5) {
+        errBox.innerText = "পাসওয়ার্ড কমপক্ষে ৫ অক্ষরের হতে হবে!";
+        errBox.style.display = 'block';
+        return;
+      }
+      
+      btn.innerText = "Registering...";
+      errBox.style.display = 'none';
+
+      // Safe username for email generation
+      const safeName = unameRaw.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+      if(!safeName) {
+        errBox.innerText = "নামে শুধু ইংরেজি অক্ষর বা সংখ্যা ব্যবহার করুন।";
+        errBox.style.display = 'block';
+        btn.innerText = "Register";
+        return;
+      }
+
+      const fakeEmail = safeName + "@german.app";
+      const finalPass = passRaw + PB_PASS_PADDING;
+
+      try {
+        // We only send the minimum required fields to avoid Schema Mismatch errors
+        await pb.collection('usersd').create({ 
+          username: safeName, 
+          email: fakeEmail, 
+          password: finalPass, 
+          passwordConfirm: finalPass
+        });
+        
+        // If created, automatically log them in
+        await pb.collection('usersd').authWithPassword(fakeEmail, finalPass);
+        
+        currentUsername = pb.authStore.model.username;
+        window.closeAuthModal();
+        enableUserModeUI(pb.authStore.model);
+        window.showToast("Registration Successful!");
+      } catch(err) {
+        console.error("PocketBase Create Error:", err);
+        errBox.innerText = parsePbError(err);
+        errBox.style.display = 'block';
+      }
+      btn.innerText = "Register";
+    };
+
+    // --- Login Logic ---
+    window.handleLogin = async function() {
+      if(!pb) return window.showToast("Database not initialized yet.");
+      const btn = document.getElementById('auth-log-btn'); 
+      const unameRaw = document.getElementById('auth-username').value.trim();
+      const passRaw = document.getElementById('auth-password').value.trim();
+      const errBox = document.getElementById('auth-error');
+      
+      if(!unameRaw || !passRaw) return window.showToast("Enter both fields to log in."); 
+      
+      btn.innerText = "Connecting...";
+      errBox.style.display = 'none';
+
+      const safeName = unameRaw.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+      const fakeEmail = safeName + "@german.app";
+      const finalPass = passRaw + PB_PASS_PADDING;
+
+      try {
+        await pb.collection('usersd').authWithPassword(fakeEmail, finalPass);
+        currentUsername = pb.authStore.model.username;
+        window.closeAuthModal();
+        enableUserModeUI(pb.authStore.model);
+        window.showToast("Logged in successfully!");
+      } catch(e) {
+        console.error("Login Error:", e);
+        if (e.status === 0) {
+           errBox.innerText = parsePbError(e);
+        } else {
+           errBox.innerText = "ভুল ইউজারনেম অথবা পাসওয়ার্ড!";
+        }
+        errBox.style.display = 'block';
+      }
+      btn.innerText = "Log In";
+    };
+
+    window.dbLogout = function() {
+      if(pb) pb.authStore.clear();
+      isLoggedIn = false; currentUsername = ""; learnedWordsMap.clear();
+      document.getElementById('user-profile-widget').innerText = "👤 Log In / Register";
+      document.getElementById('dash-username').innerText = "Guest";
+      document.getElementById('stat-words').innerText = "0"; 
+      document.getElementById('stat-streak').innerText = "0"; 
+      document.getElementById('stat-rank').innerText = "-";
+      window.renderVocab(); window.nav('dashboard');
+      window.showToast("Logged out successfully.");
+    };
+
+    async function dbSaveWords(wordsArray) {
+      if(pb && pb.authStore.isValid) { 
+        try {
+          await pb.collection('usersd').update(pb.authStore.model.id, { learnedWords: wordsArray }); 
+        } catch (e) {
+          console.error("Failed to save to PocketBase:", e);
+        }
+      }
+    }
+
+    function enableUserModeUI(data) {
+      isLoggedIn = true;
+      document.getElementById('user-profile-widget').innerText = `🔴 Logout (${currentUsername})`;
+      document.getElementById('dash-username').innerText = currentUsername;
+      
+      if(data.learnedWords && Array.isArray(data.learnedWords)) {
+        learnedWordsMap.clear();
+        data.learnedWords.forEach(w => learnedWordsMap.set(w.id, w));
+      }
+      document.getElementById('stat-streak').innerText = data.streak || 1;
+      document.getElementById('stat-words').innerText = learnedWordsMap.size;
+      
+      document.getElementById('loader').style.display = 'none';
+      window.renderVocab(); window.renderMyWords();
+    }
+
+    // --- Renderers ---
+    window.renderVocab = function() {
+      const tbody = document.getElementById('vocab-body'); tbody.innerHTML = '';
+      const filtered = VOCAB.filter(w => (!vSearch || w.de.toLowerCase().includes(vSearch) || w.en.toLowerCase().includes(vSearch)) && (vCat === 'all' || (w.cat && w.cat === vCat) || (vCat==='noun' && w.g)));
+      filtered.forEach(w => {
+        const isLearned = learnedWordsMap.has(w.id);
+        const btnCls = isLearned ? 'btn-success' : 'btn-outline';
+        const btnTxt = isLearned ? '✓ Certified' : '+ Learn';
+        const catBadgeCls = w.g ? `b-${w.g}` : `b-${w.cat||'noun'}`;
+        const catText = w.g || w.cat || 'noun';
+        
+        tbody.innerHTML += `
+          <tr style="opacity: ${isLearned ? '0.6' : '1'}">
+            <td>${w.id}</td>
+            <td class="vocab-de ${w.g ? 'c-'+w.g : ''}">${w.de}</td>
+            <td>${currentLang === 'bn' ? w.bn : w.en}</td>
+            <td><span class="badge ${catBadgeCls}">${catText}</span></td>
+            <td style="text-align:center;">
+              <button class="btn btn-sm ${btnCls}" onclick="openCertModal(${w.id})" ${isLearned?'disabled':''} style="width:100%">${btnTxt}</button>
+            </td>
+          </tr>
+        `;
+      });
+    };
+
+    window.setVocabFilter = function(val) {
+      vCat = val; const btns = document.getElementById('cat-filters').querySelectorAll('.pill');
+      btns.forEach(b => b.classList.remove('active')); 
+      Array.from(btns).find(b => b.innerText.toLowerCase() === val.toLowerCase() || (val==='all' && b.innerText==='All')).classList.add('active');
+      window.renderVocab();
+    };
+    
+    document.getElementById('search-input').addEventListener('input', (e) => { vSearch = e.target.value.toLowerCase(); window.renderVocab(); });
+
+    window.renderMyWords = function() {
+      const container = document.getElementById('my-words-container'); container.innerHTML = '';
+      if(learnedWordsMap.size === 0) return container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted)">No words certified yet.</div>';
+      const groups = {};
+      learnedWordsMap.forEach(r => {
+        const dStr = new Date(r.timestamp).toLocaleDateString();
+        if(!groups[dStr]) groups[dStr] = [];
+        const wObj = VOCAB.find(v => v.id === r.id); if(wObj) groups[dStr].push(wObj);
+      });
+      Object.keys(groups).sort((a,b) => new Date(b) - new Date(a)).forEach(date => {
+        let html = `<div style="font-weight:bold; color:var(--muted); margin: 20px 0 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">📅 Learned on: ${date}</div><div class="grid-4">`;
+        groups[date].forEach(w => { html += `<div class="card" style="padding:12px; text-align:center;"><div class="vocab-de ${w.g ? 'c-'+w.g : ''}" style="font-size:18px; margin-bottom:4px;">${w.de}</div><div style="font-size:13px; color:var(--muted)">${currentLang === 'bn' ? w.bn : w.en}</div></div>`; });
+        container.innerHTML += html + `</div>`;
+      });
+    };
+
+    function renderAlphabet() {
+      const baseGrid = document.getElementById('alpha-base-grid');
+      const specialGrid = document.getElementById('alpha-special-grid');
+      baseGrid.innerHTML = '';
+      specialGrid.innerHTML = '';
+
+      ALPHABET.forEach(a => {
+        const letterChar = a.letter.split(' ')[0]; // Gets 'A' from 'A a'
+        const html = `
+          <div class="alpha-card">
+            <!-- Letter Pronunciation -->
+            <div class="alpha-letter" title="বর্ণের উচ্চারণ" onclick="if('speechSynthesis' in window){ let u=new SpeechSynthesisUtterance('${letterChar}'); u.lang='de-DE'; window.speechSynthesis.speak(u); }">
+              ${a.letter} <span style="font-size:18px; opacity:0.7;">🔊</span>
+            </div>
+            <div class="alpha-ipa">${a.ipa}</div>
+            
+            <!-- Example Word Pronunciation -->
+            <div class="alpha-ex" title="শব্দের উচ্চারণ" onclick="if('speechSynthesis' in window){ let u=new SpeechSynthesisUtterance('${a.ex}'); u.lang='de-DE'; window.speechSynthesis.speak(u); }">
+              ${a.ex} <button class="audio-btn">🔊</button>
+            </div>
+            
+            <div class="alpha-tip">${a.tip}</div>
+          </div>
+        `;
+        if (a.special) specialGrid.innerHTML += html;
+        else baseGrid.innerHTML += html;
+      });
+    }
+
+    // --- Certification Logic ---
+    window.openCertModal = function(id, isRandom = false) {
+      if(!isLoggedIn) { window.showToast("Please log in to save your progress!"); window.openAuthModal(); return; }
+      certWordId = id; certStep = 1; isRandomPractice = isRandom;
+      const w = VOCAB.find(v => v.id === id);
+      document.getElementById('cert-target-word').innerText = w.de; document.getElementById('cert-target-word').style.display = 'block';
+      document.querySelectorAll('.cert-step').forEach(el => el.classList.remove('active')); document.getElementById('cert-step-1').classList.add('active');
+      document.getElementById('cert-feedback').style.display = 'none'; [1,2,3].forEach(i => { const inp = document.getElementById('cert-input-'+i); if(inp) inp.value = ''; });
+      const s3 = document.getElementById('cert-step3-instruction');
+      if(w.g) s3.innerText = "What is the article (gender) for this noun? (der/die/das)"; else s3.innerText = "Type the word exactly as it is one more time.";
+      document.getElementById('cert-step-num').innerText = 1; document.getElementById('cert-modal').style.display = 'flex';
+      setTimeout(()=>document.getElementById('cert-input-1').focus(), 100);
+    };
+    
+    window.closeCertModal = function() { document.getElementById('cert-modal').style.display = 'none'; };
+
+    window.verifyCertStep = async function(step) {
+      const w = VOCAB.find(v => v.id === certWordId);
+      const input = document.getElementById('cert-input-'+step).value.trim().toLowerCase();
+      const fb = document.getElementById('cert-feedback');
+      let isCorrect = false;
+      
+      if(step === 1) { if(input === w.en.toLowerCase() || input === w.bn) isCorrect = true; } 
+      else if(step === 2) { if(input === w.de.toLowerCase() || input === w.de.replace(/^(der|die|das)\s/i, '').toLowerCase()) isCorrect = true; }
+      else if(step === 3) { if(w.g && input === w.g.toLowerCase()) isCorrect = true; else if(!w.g && input === w.de.toLowerCase()) isCorrect = true; }
+
+      if(isCorrect) {
+        fb.className = "cert-feedback btn-success"; fb.innerText = "✅ Correct!"; fb.style.display = 'block';
+        setTimeout(async () => {
+          fb.style.display = 'none'; document.getElementById('cert-step-'+step).classList.remove('active');
+          if(step < 3) {
+            certStep++; document.getElementById('cert-step-num').innerText = certStep; document.getElementById('cert-step-'+certStep).classList.add('active');
+            if(certStep === 2) document.getElementById('cert-target-word').style.display = 'none';
+            if(certStep === 3) document.getElementById('cert-target-word').style.display = 'block';
+            setTimeout(()=>document.getElementById('cert-input-'+certStep).focus(), 100);
+          } else {
+            document.getElementById('cert-target-word').style.display = 'none'; document.getElementById('cert-step-success').classList.add('active'); document.getElementById('cert-step-num').parentElement.style.display = 'none';
+            if(!isRandomPractice && isLoggedIn) {
+              const newList = Array.from(learnedWordsMap.values()); 
+              newList.push({ id: w.id, timestamp: Date.now() });
+              
+              await dbSaveWords(newList); // Save to PocketBase
+              
+              learnedWordsMap.set(w.id, { id: w.id, timestamp: Date.now() });
+              document.getElementById('stat-words').innerText = learnedWordsMap.size;
+              window.renderVocab(); window.renderMyWords();
+            }
+          }
+        }, 800);
+      } else { fb.className = "cert-feedback btn-danger"; fb.innerText = "❌ Incorrect. Try again."; fb.style.display = 'block'; }
+    };
+    
+    window.speakCertWord = function() { const w = VOCAB.find(v => v.id === certWordId); if(w && 'speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(w.de); u.lang = 'de-DE'; window.speechSynthesis.speak(u); } };
+    window.startRandomPractice = function() { if(learnedWordsMap.size === 0) return window.showToast("You haven't certified any words yet!"); const ids = Array.from(learnedWordsMap.keys()); window.openCertModal(ids[Math.floor(Math.random() * ids.length)], true); };
+
+    // --- Flashcards & Chat ---
+    let fcFlipped = false, fcIdx = 0;
+    window.renderFlashcardUI = function() {
+      const list = Array.from(learnedWordsMap.keys());
+      if(list.length === 0) return document.getElementById('fc-inner').innerHTML = `<div class="flashcard-face"><div style="color:var(--muted)">No words learned yet. Add some from Vocab Tracker!</div></div>`;
+      const wObj = VOCAB.find(v => v.id === list[fcIdx]);
+      document.getElementById('fc-front').innerText = wObj.de; document.getElementById('fc-back').innerText = wObj.en; document.getElementById('fc-bn').innerText = currentLang === 'bn' ? wObj.bn : '';
+      const inner = document.getElementById('fc-inner'); fcFlipped ? inner.classList.add('flipped') : inner.classList.remove('flipped');
+    };
+    window.toggleFlashcard = function() { fcFlipped = !fcFlipped; window.renderFlashcardUI(); };
+    window.navFlashcard = function(dir) { const list = Array.from(learnedWordsMap.keys()); if(list.length===0) return; fcFlipped = false; fcIdx = (fcIdx + dir + list.length) % list.length; setTimeout(window.renderFlashcardUI, 200); };
+    
+    window.sendChat = function() {
+      const inp = document.getElementById('chat-input'); if(!inp.value.trim()) return; const win = document.getElementById('chat-window');
+      win.innerHTML += `<div class="msg msg-user"><div class="msg-avatar">🧑</div><div class="msg-bubble">${inp.value}</div></div>`; inp.value = ''; win.scrollTop = win.scrollHeight;
+      setTimeout(() => { win.innerHTML += `<div class="msg msg-tutor"><div class="msg-avatar">🎓</div><div class="msg-bubble">Sehr gut! (Mock response)</div></div>`; win.scrollTop = win.scrollHeight; }, 1000);
+    };
+
+    // Shared DB UI Functions
+    window.renderVideos = function(vids) {
+      const container = document.getElementById('video-list-container'); container.innerHTML = '';
+      if(vids.length === 0) return container.innerHTML = '<div style="color:var(--muted); padding:10px;">No videos from PocketBase yet.</div>';
+      vids.forEach((v, index) => {
+        const div = document.createElement('div');
+        div.className = `video-item ${index === 0 ? 'active' : ''}`;
+        div.onclick = function() { 
+          document.getElementById('vid-iframe').src = v.url + "?controls=1&modestbranding=1&rel=0";
+          document.querySelectorAll('.video-item').forEach(el => el.classList.remove('active')); this.classList.add('active');
+        };
+        div.innerHTML = `<div class="v-title">${v.serial}. ${v.title}</div><div class="v-meta"><span>▶ Play</span><span>${v.duration}</span></div>`;
+        container.appendChild(div);
+        if(index === 0) document.getElementById('vid-iframe').src = v.url + "?controls=1&modestbranding=1&rel=0";
+      });
+    };
+
+    window.renderLeaderboard = function(users) {
+      const tbody = document.getElementById('leaderboard-body'); tbody.innerHTML = '';
+      users.forEach((u, i) => {
+        if(isLoggedIn && u.username === currentUsername) document.getElementById('stat-rank').innerText = `#${i+1}`;
+        const isMe = isLoggedIn && u.username === currentUsername;
+        tbody.innerHTML += `<tr style="${isMe ? 'background: rgba(240,192,64,0.1)' : ''}"><td style="font-weight:bold; color:var(--accent)">#${i+1}</td><td style="font-weight:bold">${u.username} ${isMe?'(You)':''}</td><td>${u.learnedWords?.length || 0}</td></tr>`;
+      });
+    };
+
+    // =========================================================================
+    // 🚀 INITIALIZATION (PocketBase Only)
+    // =========================================================================
+    window.onload = function() {
+      // 1. Initial Render of static UI
+      renderAlphabet();
+      renderVocab();
+
+      // 2. Initialize PocketBase silently
+      setTimeout(async () => {
+        try {
+          pb = new PocketBase('https://cfljudb.duckdns.org');
+          document.getElementById('loader').style.display = 'none';
+
+          if(pb.authStore.isValid) {
+            currentUsername = pb.authStore.model.username;
+            enableUserModeUI(pb.authStore.model);
+          }
+
+          // Fetch Videos
+          try { 
+            const vids = await pb.collection('videos').getFullList({ sort: 'serial' }); 
+            window.renderVideos(vids); 
+          } catch(e) { console.log("Video collection empty or not accessible."); }
+
+          // Fetch Leaderboard
+          try { 
+            const users = await pb.collection('usersd').getFullList({ sort: '-streak' }); 
+            window.renderLeaderboard(users); 
+          } catch(e) { console.log("Leaderboard not accessible."); }
+
+        } catch(err) {
+          document.getElementById('loader').style.display = 'none';
+          console.warn("PocketBase is not reachable right now.");
+        }
+      }, 500); 
+    };
+
+  </script>
 </body>
 </html>
