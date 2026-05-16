@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EFL S4 – Print Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.21.1/pocketbase.umd.min.js"></script>
+
+<style>
+/* ─── DESIGN TOKENS ──────────────────────────────────────────── */
+:root {
+  --bg:        #0b0d11;
+  --surface:   #13161d;
+  --border:    #1f2430;
+  --border2:   #2a3040;
+  --accent:    #e8c84a;
+  --accent2:   #4ae8a0;
+  --text:      #e2e6f0;
+  --muted:     #6b7385;
+  --danger:    #e84a4a;
+  --mono:      'IBM Plex Mono', monospace;
+  --sans:      'IBM Plex Sans', sans-serif;
+  --display:   'Bebas Neue', sans-serif;
+}
+
+/* ─── RESET ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+}
+
+/* ─── SCREEN HEADER ─────────────────────────────────────────── */
+.app-header {
+  background: var(--surface);
+  border-bottom: 2px solid var(--accent);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-header .logo { display: flex; align-items: baseline; gap: 10px; }
+.app-header .logo-main { font-family: var(--display); font-size: 28px; letter-spacing: 3px; color: var(--accent); line-height: 1; }
+.app-header .logo-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+.app-header .badge { font-family: var(--mono); font-size: 10px; background: var(--border); color: var(--accent2); border: 1px solid var(--accent2); padding: 3px 10px; letter-spacing: 1.5px; }
+
+/* ─── CONTROLS PANEL ─────────────────────────────────────────── */
+.controls { background: var(--surface); border-bottom: 1px solid var(--border); padding: 28px 32px; display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+.field-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 300px; }
+.field-group label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+.field-group select { background: var(--bg); border: 1px solid var(--border2); color: var(--text); font-family: var(--mono); font-size: 13px; padding: 10px 14px; outline: none; transition: border-color 0.2s; appearance: none; cursor: pointer; }
+.field-group select:focus { border-color: var(--accent); }
+.select-wrapper { position: relative; }
+.select-wrapper::after { content: '▾'; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--accent); pointer-events: none; font-size: 14px; }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 24px; font-family: var(--mono); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+.btn-primary { background: var(--accent); color: #000; font-weight: 600; }
+.btn-primary:hover { background: #f0d86a; transform: translateY(-1px); }
+.btn-primary:disabled { background: var(--border2); color: var(--muted); cursor: not-allowed; transform: none; }
+.btn-print { background: transparent; color: var(--accent2); border: 1px solid var(--accent2); }
+.btn-print:hover { background: var(--accent2); color: #000; }
+.btn-print:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ─── STATUS BAR ─────────────────────────────────────────────── */
+.status-bar { display: flex; align-items: center; gap: 10px; padding: 10px 32px; background: var(--bg); border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); min-height: 38px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.status-dot.loading { background: var(--accent); animation: pulse 1s infinite; }
+.status-dot.ok      { background: var(--accent2); }
+.status-dot.error   { background: var(--danger); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ─── PREVIEW WRAPPER ────────────────────────────────────────── */
+.preview-wrapper { padding: 32px; min-height: calc(100vh - 180px); }
+.preview-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; gap: 16px; color: var(--muted); font-family: var(--mono); font-size: 13px; border: 1px dashed var(--border2); }
+.preview-empty svg { opacity: 0.2; }
+.a4-preview-container { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+
+/* For Screen Preview only */
+.a4-page-preview { background: #fff; width: 210mm; min-height: 297mm; box-shadow: 0 8px 60px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4); padding: 15mm; color: #000; position: relative; font-family: 'IBM Plex Sans', Arial, sans-serif; margin-bottom: 24px;}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* PRINT DOCUMENT STYLES */
+/* ─────────────────────────────────────────────────────────────── */
+
+.form-doc { font-family: Arial, sans-serif; color: #000; font-size: 9pt; }
+
+/* === PAGE HEADER === */
+.form-page-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #000; padding-bottom: 8px; margin-bottom: 10px; gap: 10px; }
+.form-tournament-badge { background: #000; color: #fff; font-family: 'Bebas Neue', 'Arial Black', sans-serif; font-size: 18pt; letter-spacing: 3px; padding: 4px 14px; line-height: 1; white-space: nowrap; }
+.form-meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; flex: 1; }
+.form-meta-cell { border: 1px solid #000; padding: 4px 6px; }
+.form-meta-label { font-size: 6pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; }
+.form-meta-value { font-size: 9pt; font-weight: 600; margin-top: 2px; }
+
+/* === SCORE BLOCK === */
+.score-block { border: 2px solid #000; padding: 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #f8f8f8; }
+.score-team { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
+.score-team img { width: 56px; height: 56px; object-fit: contain; }
+.score-team-img-placeholder { width: 56px; height: 56px; border: 2px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 10pt; color: #999; background: #e2e8f0; border-radius: 50%; font-weight: bold;}
+.score-team-name { font-size: 11pt; font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: 1px; max-width: 120px; }
+
+.score-box-group { display: flex; align-items: center; gap: 8px; }
+.score-box { width: 36mm; height: 22mm; border: 3px solid #000; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 28pt; font-weight: 900; color: #ccc; }
+.score-separator { font-size: 24pt; font-weight: 900; }
+
+/* === SECTION TITLE === */
+.section-title { background: #000; color: #fff; font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; padding: 4px 8px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;}
+
+/* === AWARDS BLOCK === */
+.awards-block { margin-bottom: 10px; }
+.award-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 5px; }
+.award-num { font-size: 8pt; font-weight: 700; width: 20px; flex-shrink: 0; padding-bottom: 2px; }
+.award-label { font-size: 8pt; font-weight: 700; width: 90px; flex-shrink: 0; padding-bottom: 2px; }
+.award-line { flex: 1; border-bottom: 1px solid #000; height: 16px; }
+
+/* === TWO-COLUMN EVENTS GRID === */
+.events-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.events-col { border: 1.5px solid #000; }
+.events-col-header { background: #1e293b; color: #fff; padding: 6px 8px; font-size: 9pt; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #000; }
+.events-col-header .team-crest { width: 24px; height: 24px; object-fit: contain; background: #fff; border-radius: 50%; padding: 2px; }
+.events-section { border-top: 1px solid #ddd; padding: 5px 8px; }
+.events-section:first-child { border-top: none; }
+.events-section-label { font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #333; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; background: #f1f5f9; padding: 4px; border-radius: 4px;}
+.blank-line { border-bottom: 1px solid #888; margin-bottom: 6px; height: 16px; display: flex; align-items: flex-end; padding-bottom: 1px; }
+.blank-line-num { font-size: 6.5pt; color: #666; width: 12px; flex-shrink: 0; }
+
+/* GK SAVES TALLY */
+.tally-box { border: 1px dashed #64748b; height: 35px; margin: 4px 0 6px; padding: 4px; font-size: 7.5pt; color: #94a3b8; font-style: italic;}
+.saves-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.saves-box { border: 1.5px solid #000; width: 32px; height: 22px; flex-shrink: 0; }
+.saves-label { font-size: 8pt; font-weight: 700; }
+
+/* === PENALTIES BLOCK === */
+.penalties-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.penalty-col { border: 1.5px solid #000; }
+.penalty-col-header { background: #334155; color: #fff; padding: 5px 8px; font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
+.penalty-col-header img { width: 18px; height: 18px; background: #fff; border-radius: 50%; padding: 1px; }
+.penalty-inner { padding: 6px 8px; }
+.penalty-row { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 8px; }
+.penalty-label { font-size: 7.5pt; font-weight: 700; width: 65px; flex-shrink: 0; padding-bottom: 1px; }
+.penalty-line { flex: 1; border-bottom: 1px solid #000; height: 14px; }
+.penalty-scored-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.penalty-scored-label { font-size: 7.5pt; font-weight: 700; }
+.checkbox-option { display: flex; align-items: center; gap: 4px; font-size: 7.5pt; font-weight: 600;}
+.print-checkbox { width: 12px; height: 12px; border: 1.5px solid #000; display: inline-block; flex-shrink: 0; }
+
+/* === PAGE 2 HEADERS === */
+.roster-page-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 12px; }
+.roster-page-title { font-family: 'Bebas Neue', 'Arial Black', sans-serif; font-size: 16pt; letter-spacing: 2px; }
+.roster-page-sub { font-size: 7.5pt; color: #555; }
+
+/* === SIDE BY SIDE ROSTER (COMPACT) === */
+.rosters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10mm; align-items: start; }
+.roster-section { margin-bottom: 0; border: 1px solid #000;}
+.roster-team-header { display: flex; align-items: center; gap: 8px; background: #0f172a; color: #fff; padding: 6px 8px; margin-bottom: 0; }
+.roster-team-header img { width: 24px; height: 24px; object-fit: contain; background: #fff; border-radius: 50%; padding: 2px;}
+.roster-team-name { font-size: 10pt; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+
+.roster-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+.roster-table th { background: #e2e8f0; border: 1px solid #94a3b8; padding: 4px 6px; text-align: left; font-size: 6.5pt; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; color: #1e293b;}
+.roster-table td { border: 1px solid #ccc; padding: 3px 4px; vertical-align: middle; height: 26px; }
+.roster-table tr:nth-child(even) td { background: #f8fafc; }
+
+.player-photo-cell { width: 28px; text-align: center; }
+.player-photo { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1px solid #94a3b8; } 
+.player-photo-placeholder { width: 22px; height: 22px; border-radius: 50%; border: 1px dashed #94a3b8; background: #f1f5f9; display: inline-flex; align-items: center; justify-content: center; font-size: 7pt; color: #94a3b8; font-weight: bold;}
+
+.player-name-cell { font-weight: 700; font-size: 8pt; max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.check-cell { width: 75px; }
+.check-cell .checkbox-option { font-size: 6.5pt; margin-bottom: 2px; }
+
+
+/* ─── PRINT STYLES ───────────────────────────────────────────── */
+@media print {
+  @page { size: A4; margin: 10mm; } /* Reduced Margin to fit more content safely */
+  
+  body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+  
+  /* Hide all screen UI */
+  .app-header, .controls, .status-bar, .preview-wrapper > .preview-empty, .btn-print { display: none !important; }
+  
+  /* Reset container for seamless flowing print */
+  .preview-wrapper { padding: 0 !important; background: #fff !important; }
+  .a4-preview-container { display: block; gap: 0; }
+  
+  /* Remove Forced Page Breaks & Blank Spaces */
+  .a4-page-preview { 
+      box-shadow: none !important; 
+      width: 100% !important; 
+      min-height: auto !important; 
+      padding: 0 !important; 
+      margin: 0 !important;
+      page-break-after: auto; /* FIXED: Lets the browser decide when to break */
+      break-after: auto; 
+  }
+  
+  /* Prevent cutting elements in half */
+  .roster-section, .events-col, .penalty-col, .score-block, .awards-block { 
+      page-break-inside: avoid; 
+      break-inside: avoid; 
+  }
+  
+  .form-doc * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .form-tournament-badge, .events-col-header, .roster-team-header, .section-title, .penalty-col-header { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">
+    <span class="logo-main">EFL S4</span>
+    <span class="logo-sub">Print Generator</span>
+  </div>
+  <span class="badge">REFEREE TOOL v4.1</span>
+</header>
+
+<div class="controls">
+  <div class="field-group">
+    <label>Select Fixture</label>
+    <div class="select-wrapper">
+      <select id="fixtureSelect">
+        <option value="">— Loading fixtures… —</option>
+      </select>
+    </div>
+  </div>
+  <button class="btn btn-primary" id="generateBtn" disabled>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Generate Printable Form
+  </button>
+  <button class="btn btn-print" id="printBtn" disabled onclick="window.print()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Print / Save PDF
+  </button>
+</div>
+
+<div class="status-bar">
+  <span class="status-dot" id="statusDot"></span>
+  <span id="statusText">Connecting to database…</span>
+</div>
+
+<div class="preview-wrapper">
+  <div class="preview-empty" id="emptyState">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>
+    <span>Select a fixture and click <strong>Generate</strong> to preview the match form</span>
+  </div>
+  <div class="a4-preview-container" id="previewContainer"></div>
+</div>
+
+<script>
+const PB_URL = 'https://efljudb.duckdns.org';
+const pb = new PocketBase(PB_URL);
+
+const fixtureSelect = document.getElementById('fixtureSelect');
+const generateBtn   = document.getElementById('generateBtn');
+const printBtn      = document.getElementById('printBtn');
+const previewEl     = document.getElementById('previewContainer');
+const emptyState    = document.getElementById('emptyState');
+const statusDot     = document.getElementById('statusDot');
+const statusText    = document.getElementById('statusText');
+
+let fixturesMap = {};
+let teamsMap = {};
+
+function setStatus(msg, state = '') {
+  statusText.textContent = msg;
+  statusDot.className = 'status-dot' + (state ? ' ' + state : '');
+}
+
+function imgUrl(collectionId, recordId, fileName) {
+  if (!fileName) return null;
+  return `${PB_URL}/api/files/${collectionId}/${recordId}/${fileName}`;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return 'TBD';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function blankLines(n, startNum = 1) {
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    html += `<div class="blank-line"><span class="blank-line-num">${startNum + i}.</span></div>`;
+  }
+  return html;
+}
+
+function scoreTeamImg(url, teamName) {
+  let shortName = teamName ? teamName.substring(0, 3).toUpperCase() : 'TBD';
+  if (url) {
+    return `<img src="${url}" style="width:56px;height:56px;object-fit:contain;border-radius:50%;background:#fff;padding:2px;" onerror="this.outerHTML='<div class=\\'score-team-img-placeholder\\'>${shortName}</div>'" crossorigin="anonymous" />`;
+  }
+  return `<div class="score-team-img-placeholder">${shortName}</div>`;
+}
+
+// ── Fetch Fixtures & Teams ───────────────────────────────────────────────────
+async function loadFixtures() {
+  setStatus('Fetching fixtures and teams…', 'loading');
+  try {
+    const tRecords = await pb.collection('teams').getFullList();
+    tRecords.forEach(t => teamsMap[t.id] = t);
+
+    const records = await pb.collection('fixtures').getFullList({ sort: '-match_date' });
+
+    fixtureSelect.innerHTML = '<option value="">— Select a Fixture —</option>';
+    records.forEach(r => {
+      let t1Id = Array.isArray(r.team1) ? r.team1[0] : r.team1;
+      let t2Id = Array.isArray(r.team2) ? r.team2[0] : r.team2;
+      
+      const t1 = teamsMap[t1Id] || { name: 'Team 1', crest_text: 'T1' };
+      const t2 = teamsMap[t2Id] || { name: 'Team 2', crest_text: 'T2' };
+      
+      const t1Name = t1.name || t1.crest_text || 'TBD';
+      const t2Name = t2.name || t2.crest_text || 'TBD';
+
+      const date = r.match_date ? new Date(r.match_date).toLocaleDateString('en-GB') : 'No Date';
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = `${t1Name} vs ${t2Name}  (${date})`;
+      fixtureSelect.appendChild(opt);
+      fixturesMap[r.id] = r;
+    });
+
+    generateBtn.disabled = false;
+    setStatus(`${records.length} fixtures loaded. Select one to begin.`, 'ok');
+  } catch (e) {
+    setStatus('Error loading data: ' + e.message, 'error');
+    console.error(e);
+  }
+}
+
+// ── Fetch Players for a Team ───────────────────────────────────────────────
+async function loadPlayers(teamId) {
+  if (!teamId) return [];
+  try {
+    const records = await pb.collection('players').getFullList({
+      filter: `team ~ "${teamId}" || team = "${teamId}"`,
+      sort: 'name',
+    });
+    return records;
+  } catch (e) {
+    console.warn('Could not load players for team', teamId, e);
+    return [];
+  }
+}
+
+// ── Build Player Row HTML ──────────────────────────────────────────────────
+function buildPlayerRow(player) {
+  const photoUrl = imgUrl(player.collectionId, player.id, player.avatar || player.photo || player.image);
+  let photoHtml = photoUrl 
+    ? `<img src="${photoUrl}" class="player-photo" onerror="this.outerHTML='<div class=\\'player-photo-placeholder\\'>${player.name.charAt(0)}</div>'" crossorigin="anonymous" />`
+    : `<div class="player-photo-placeholder">${player.name ? player.name.charAt(0) : '?'}</div>`;
+
+  const name = player.name || player.full_name || 'Unknown';
+
+  return `
+    <tr>
+      <td class="player-photo-cell">${photoHtml}</td>
+      <td class="player-name-cell">${name}</td>
+      <td class="check-cell">
+        <div class="checkbox-option"><span class="print-checkbox"></span> &lt;15m</div>
+        <div class="checkbox-option"><span class="print-checkbox"></span> DNP</div>
+      </td>
+    </tr>`;
+}
+
+// ── Build Roster Section HTML ──────────────────────────────────────────────
+function buildRosterSection(team, players) {
+  const teamName = team.name || team.crest_text || 'Unknown Team';
+  const logoUrl = imgUrl(team.collectionId, team.id, team.logo || team.crest || team.banner);
+  let logoHtml = logoUrl ? `<img src="${logoUrl}" crossorigin="anonymous" />` : `<div style="width:24px;height:24px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#000;font-weight:bold;font-size:8px;">${teamName.substring(0,3)}</div>`;
+
+  let rows = '';
+  if (players.length === 0) {
+    rows = `<tr><td colspan="3" style="padding:15px;text-align:center;color:#94a3b8;font-style:italic">No players found</td></tr>`;
+  } else {
+    players.forEach(p => { rows += buildPlayerRow(p); });
+  }
+
+  return `
+  <div class="roster-section">
+    <div class="roster-team-header">
+      ${logoHtml}
+      <span class="roster-team-name">${teamName}</span>
+    </div>
+    <table class="roster-table">
+      <thead>
+        <tr>
+          <th style="width:28px; text-align:center;">Pic</th>
+          <th>Player Name</th>
+          <th style="width:75px">Minutes</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+// ── Build Events Column HTML ───────────────────────────────────────────────
+function buildEventsCol(team) {
+  const teamName = team.name || team.crest_text || 'Team';
+  const logoUrl = imgUrl(team.collectionId, team.id, team.logo || team.crest || team.banner);
+  let logoHtml = logoUrl ? `<img src="${logoUrl}" class="team-crest" crossorigin="anonymous" />` : '';
+
+  return `
+  <div class="events-col">
+    <div class="events-col-header">
+      ${logoHtml}
+      <span>${teamName}</span>
+    </div>
+
+    <div class="events-section">
+      <div class="events-section-label"><span class="event-icon">⚽</span> Goals Scored</div>
+      ${blankLines(6)}
+    </div>
+
+    <div class="events-section">
+      <div class="events-section-label"><span class="event-icon">🎯</span> Assists Provided</div>
+      ${blankLines(6)}
+    </div>
+
+    <div class="events-section">
+      <div class="events-section-label"><span class="event-icon">🟨</span> Yellow Cards</div>
+      ${blankLines(4)}
+    </div>
+
+    <div class="events-section">
+      <div class="events-section-label"><span class="event-icon">🟥</span> Red Cards</div>
+      ${blankLines(2)}
+    </div>
+
+    <div class="events-section">
+      <div class="events-section-label"><span class="event-icon">🧤</span> Goalkeeper</div>
+      <div class="tally-box">Tally Marks (||||) for saves:</div>
+      <div class="saves-row">
+        <span class="saves-label">Total Saves Number:</span>
+        <div class="saves-box"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Build Penalty Column HTML ──────────────────────────────────────────────
+function buildPenaltyCol(team) {
+  const teamName = team.name || team.crest_text || 'Team';
+  const logoUrl = imgUrl(team.collectionId, team.id, team.logo || team.crest || team.banner);
+  let logoHtml = logoUrl ? `<img src="${logoUrl}" crossorigin="anonymous" />` : '';
+
+  return `
+  <div class="penalty-col">
+    <div class="penalty-col-header">${logoHtml} ${teamName} — Penalty</div>
+    <div class="penalty-inner">
+      <div style="font-size: 7.5pt; color:#64748b; margin-bottom:8px; font-weight:600;">PENALTY 1</div>
+      <div class="penalty-row">
+        <span class="penalty-label">Earned By:</span>
+        <div class="penalty-line"></div>
+      </div>
+      <div class="penalty-row">
+        <span class="penalty-label">Taken By:</span>
+        <div class="penalty-line"></div>
+      </div>
+      <div class="penalty-scored-row" style="margin-bottom:12px; border-bottom: 1px dashed #ccc; padding-bottom:8px;">
+        <span class="penalty-scored-label">Scored Goal?</span>
+        <div class="checkbox-option"><span class="print-checkbox"></span> Yes</div>
+        <div class="checkbox-option"><span class="print-checkbox"></span> No</div>
+      </div>
+
+      <div style="font-size: 7.5pt; color:#64748b; margin-bottom:8px; font-weight:600;">PENALTY 2</div>
+      <div class="penalty-row">
+        <span class="penalty-label">Earned By:</span>
+        <div class="penalty-line"></div>
+      </div>
+      <div class="penalty-row">
+        <span class="penalty-label">Taken By:</span>
+        <div class="penalty-line"></div>
+      </div>
+      <div class="penalty-scored-row">
+        <span class="penalty-scored-label">Scored Goal?</span>
+        <div class="checkbox-option"><span class="print-checkbox"></span> Yes</div>
+        <div class="checkbox-option"><span class="print-checkbox"></span> No</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Main Generate Function ─────────────────────────────────────────────────
+async function generateForm() {
+  const fixtureId = fixtureSelect.value;
+  if (!fixtureId) { alert('Please select a fixture first.'); return; }
+
+  generateBtn.disabled = true;
+  generateBtn.textContent = 'Generating…';
+  setStatus('Building form…', 'loading');
+
+  const fixture = fixturesMap[fixtureId];
+  
+  let rawT1Id = fixture.team1;
+  let rawT2Id = fixture.team2;
+  if (Array.isArray(rawT1Id)) rawT1Id = rawT1Id[0];
+  if (Array.isArray(rawT2Id)) rawT2Id = rawT2Id[0];
+  if (typeof rawT1Id === 'object' && rawT1Id !== null) rawT1Id = rawT1Id.id;
+  if (typeof rawT2Id === 'object' && rawT2Id !== null) rawT2Id = rawT2Id.id;
+
+  const t1Data = fixture.expand?.team1 || teamsMap[rawT1Id] || { id: rawT1Id };
+  const t2Data = fixture.expand?.team2 || teamsMap[rawT2Id] || { id: rawT2Id };
+
+  const t1Id = t1Data.id;
+  const t2Id = t2Data.id;
+
+  const t1Logo = imgUrl(t1Data.collectionId || 'teams', t1Id, t1Data.logo || t1Data.crest || t1Data.banner);
+  const t2Logo = imgUrl(t2Data.collectionId || 'teams', t2Id, t2Data.logo || t2Data.crest || t2Data.banner);
+
+  setStatus('Fetching player rosters…', 'loading');
+  
+  let t1Players = [];
+  let t2Players = [];
+  
+  let filterQuery = [];
+  if (t1Id) filterQuery.push(`team="${t1Id}"`);
+  if (t2Id) filterQuery.push(`team="${t2Id}"`);
+  
+  if (filterQuery.length > 0) {
+      try {
+          const players = await pb.collection('players').getFullList({
+              filter: filterQuery.join(' || '),
+              sort: 'name'
+          });
+          
+          t1Players = players.filter(p => {
+              let pTeam = Array.isArray(p.team) ? p.team[0] : p.team;
+              return pTeam === t1Id;
+          });
+          
+          t2Players = players.filter(p => {
+              let pTeam = Array.isArray(p.team) ? p.team[0] : p.team;
+              return pTeam === t2Id;
+          });
+      } catch (e) {
+          console.error("Error fetching players:", e);
+      }
+  }
+
+  const matchDate = formatDate(fixture.match_date || fixture.date);
+  const matchType = fixture.match_type || fixture.type || fixture.stage || 'League Match';
+  const venue     = fixture.venue || fixture.location || 'Central Field';
+  
+  const t1Name    = t1Data.name || t1Data.crest_text || 'Team 1';
+  const t2Name    = t2Data.name || t2Data.crest_text || 'Team 2';
+
+  // Everything is wrapped in ONE flowing container now
+  const outputHTML = `
+  <div class="a4-page-preview form-doc">
+
+    <!-- Page Header -->
+    <div class="form-page-header">
+      <div class="form-tournament-badge">EFL SEASON 4</div>
+      <div class="form-meta-grid">
+        <div class="form-meta-cell">
+          <div class="form-meta-label">Match Date</div>
+          <div class="form-meta-value">${matchDate}</div>
+        </div>
+        <div class="form-meta-cell">
+          <div class="form-meta-label">Match Type</div>
+          <div class="form-meta-value">${matchType}</div>
+        </div>
+        <div class="form-meta-cell">
+          <div class="form-meta-label">Venue</div>
+          <div class="form-meta-value">${venue}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score Block -->
+    <div class="score-block">
+      <div class="score-team">
+        ${scoreTeamImg(t1Logo, t1Name)}
+        <div class="score-team-name">${t1Name}</div>
+      </div>
+      <div class="score-box-group">
+        <div class="score-box">—</div>
+        <div class="score-separator">:</div>
+        <div class="score-box">—</div>
+      </div>
+      <div class="score-team">
+        ${scoreTeamImg(t2Logo, t2Name)}
+        <div class="score-team-name">${t2Name}</div>
+      </div>
+    </div>
+
+    <!-- Match Awards -->
+    <div class="awards-block">
+      <div class="section-title">🏆 Match Awards</div>
+      <div style="padding:6px 4px">
+        <div class="award-row">
+          <span class="award-num">🥇</span>
+          <span class="award-label">Player of the Match</span>
+          <div class="award-line"></div>
+          <span style="font-size:7.5pt;color:#64748b;margin-left:8px;white-space:nowrap;font-weight:600;">Team: _______________</span>
+        </div>
+        <div class="award-row">
+          <span class="award-num">🥈</span>
+          <span class="award-label">2nd Best Player</span>
+          <div class="award-line"></div>
+          <span style="font-size:7.5pt;color:#64748b;margin-left:8px;white-space:nowrap;font-weight:600;">Team: _______________</span>
+        </div>
+        <div class="award-row">
+          <span class="award-num">🥉</span>
+          <span class="award-label">3rd Best Player</span>
+          <div class="award-line"></div>
+          <span style="font-size:7.5pt;color:#64748b;margin-left:8px;white-space:nowrap;font-weight:600;">Team: _______________</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Events Grid -->
+    <div class="section-title">📋 Match Events</div>
+    <div class="events-grid" style="margin-top:6px">
+      ${buildEventsCol(t1Data)}
+      ${buildEventsCol(t2Data)}
+    </div>
+
+    <!-- Penalties -->
+    <div class="section-title">⚡ Penalty Shootout / Spot Kicks</div>
+    <div class="penalties-grid" style="margin-top:6px">
+      ${buildPenaltyCol(t1Data)}
+      ${buildPenaltyCol(t2Data)}
+    </div>
+    
+    <hr style="margin: 20px 0; border: 1px dashed #ccc;">
+
+    <!-- Roster Header -->
+    <div class="roster-page-header">
+      <div>
+        <div class="roster-page-title">Player Minutes Record</div>
+        <div class="roster-page-sub">EFL Season 4 · ${t1Name} vs ${t2Name}</div>
+      </div>
+      <div style="font-size:7pt;color:#475569;text-align:right;font-weight:600;background:#f1f5f9;padding:6px;border:1px solid #cbd5e1;line-height:1.4;">
+        Mark <strong style="color:#000;">[&lt;15m]</strong> for players on pitch under 15 mins<br>
+        Mark <strong style="color:#000;">[DNP]</strong> for players who did not participate at all
+      </div>
+    </div>
+
+    <!-- Compact Side by Side Grid -->
+    <div class="rosters-grid">
+        ${buildRosterSection(t1Data, t1Players)}
+        ${buildRosterSection(t2Data, t2Players)}
+    </div>
+
+  </div>`;
+
+  emptyState.style.display = 'none';
+  previewEl.innerHTML = outputHTML;
+  printBtn.disabled = false;
+  generateBtn.disabled = false;
+  generateBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Generate Printable Form`;
+  setStatus(`Form generated: ${t1Name} vs ${t2Name} · ${t1Players.length + t2Players.length} players loaded`, 'ok');
+}
+
+generateBtn.addEventListener('click', generateForm);
+
+fixtureSelect.addEventListener('change', () => {
+  generateBtn.disabled = !fixtureSelect.value;
+  if (!fixtureSelect.value) {
+    printBtn.disabled = true;
+    previewEl.innerHTML = '';
+    emptyState.style.display = 'flex';
+  }
+});
+
+loadFixtures();
+</script>
+
+</body>
+</html>
