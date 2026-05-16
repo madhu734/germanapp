@@ -175,7 +175,7 @@
   <!-- Toast Notification -->
   <div id="toast">Message</div>
 
-  <!-- Authentication Modal -->
+  <!-- Authentication Modal (Custom Manual Auth) -->
   <div id="auth-modal" class="modal-overlay">
     <div class="modal-box">
       <div style="display: flex; justify-content: flex-end; margin-bottom: -20px;">
@@ -183,17 +183,16 @@
       </div>
       <div style="font-size: 40px; margin-bottom: 16px;">🇩🇪</div>
       <h2 style="margin-bottom: 8px;">Log In / Register</h2>
-      <p style="color: var(--muted); margin-bottom: 24px; font-size: 14px;">Sign in to track your progress. Only 5 digits needed!</p>
+      <p style="color: var(--muted); margin-bottom: 24px; font-size: 14px;">Sign in to track your progress.</p>
       
-      <input type="text" id="auth-username" class="input" placeholder="Username (no spaces preferred)" style="text-align: center;">
-      <input type="password" id="auth-password" class="input" placeholder="Password (min 5 chars)" style="text-align: center;" onkeydown="if(event.key==='Enter') handleLogin()">
+      <input type="text" id="auth-username" class="input" placeholder="Username" style="text-align: center;">
+      <input type="password" id="auth-password" class="input" placeholder="Password" style="text-align: center;" onkeydown="if(event.key==='Enter') handleLogin()">
       
       <div style="display: flex; gap: 10px; margin-top: 12px;">
         <button class="btn btn-outline" style="flex: 1;" onclick="handleRegister()" id="auth-reg-btn">Register</button>
         <button class="btn btn-accent" style="flex: 1;" onclick="handleLogin()" id="auth-log-btn">Log In</button>
       </div>
 
-      <!-- Enhanced Error Box for Debugging -->
       <div id="auth-error" style="background: rgba(232,80,122,0.1); border: 1px solid var(--die); color: var(--die); padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 16px; display: none; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap;"></div>
     </div>
   </div>
@@ -449,7 +448,7 @@
   </main>
 
   <!-- ══════════════════════════════════════════════════════════════
-       DATA & JAVASCRIPT LOGIC (ONLY PocketBase)
+       DATA & JAVASCRIPT LOGIC (CUSTOM BASE AUTH)
   ══════════════════════════════════════════════════════════════ -->
   <script>
     // --- Data: Detailed Alphabet Array ---
@@ -546,14 +545,13 @@
     let vSearch = "", vCat = "all";
     let isLoggedIn = false;
     let currentUsername = "";
+    let currentUserId = null;
     let certWordId = null;
     let certStep = 1;
     let isRandomPractice = false;
 
     // --- Initialize PocketBase ---
     let pb = null;
-    // Magic String to bypass PocketBase 8 char password limit securely
-    const PB_PASS_PADDING = "_PdB26!"; 
 
     // --- UI Helpers ---
     window.showToast = function(msg) {
@@ -603,11 +601,9 @@
 
     // --- Error Catcher System ---
     function parsePbError(err) {
-      // 🚨 STATUS 0 means the browser BLOCKED the request before reaching the server!
       if (err.status === 0) {
-        return "সার্ভার কানেকশন ব্লকড! (ClientResponseError 0)\nআপনার ব্রাউজারের অ্যাডব্লকার (Adblocker/Brave Shields) বন্ধ করুন, অথবা আপনার PocketBase সার্ভারের CORS/SSL সেটিং ঠিক নেই।";
+        return "সার্ভার কানেকশন ব্লকড! (ClientResponseError 0)\nআপনার ব্রাউজারের অ্যাডব্লকার (Adblocker/Brave Shields) বন্ধ করুন, অথবা আপনার সার্ভারের CORS/SSL সেটিং ঠিক নেই।";
       }
-      
       let errMsg = "ব্যর্থ হয়েছে!";
       if (err.data && err.data.data) {
         const issues = Object.keys(err.data.data).map(k => `${k} -> ${err.data.data[k].message}`).join(', ');
@@ -615,120 +611,137 @@
       } else if (err.message) {
         errMsg += "\n" + err.message;
       }
-      
-      if(err.status === 400 || err.status === 403) {
-        errMsg += "\n(নোট: আপনার PocketBase এর 'usersd' টেবিলের API Rules-এ 'Create' অপশনটি ফাঁকা (\"\") করা আছে কিনা চেক করুন!)";
-      }
       return errMsg;
     }
 
-    // --- Register Logic with EXPLICIT Error Details ---
+    // =========================================================================
+    // 🛠️ CUSTOM MANUAL AUTHENTICATION LOGIC (BASE COLLECTION)
+    // =========================================================================
+    
     window.handleRegister = async function() {
       if(!pb) return window.showToast("Database not initialized yet.");
       const btn = document.getElementById('auth-reg-btn'); 
-      const unameRaw = document.getElementById('auth-username').value.trim();
-      const passRaw = document.getElementById('auth-password').value.trim();
+      const uname = document.getElementById('auth-username').value.trim();
+      const pass = document.getElementById('auth-password').value.trim();
       const errBox = document.getElementById('auth-error');
       
-      if(!unameRaw) return window.showToast("Username required.");
-      if(passRaw.length < 5) {
-        errBox.innerText = "পাসওয়ার্ড কমপক্ষে ৫ অক্ষরের হতে হবে!";
-        errBox.style.display = 'block';
-        return;
-      }
+      if(!uname || !pass) return window.showToast("নাম এবং পাসওয়ার্ড দুটিই দিন।");
       
       btn.innerText = "Registering...";
       errBox.style.display = 'none';
 
-      // Safe username for email generation
-      const safeName = unameRaw.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
-      if(!safeName) {
-        errBox.innerText = "নামে শুধু ইংরেজি অক্ষর বা সংখ্যা ব্যবহার করুন।";
-        errBox.style.display = 'block';
-        btn.innerText = "Register";
-        return;
-      }
-
-      const fakeEmail = safeName + "@german.app";
-      const finalPass = passRaw + PB_PASS_PADDING;
-
       try {
-        // We only send the minimum required fields to avoid Schema Mismatch errors
-        await pb.collection('usersd').create({ 
-          username: safeName, 
-          email: fakeEmail, 
-          password: finalPass, 
-          passwordConfirm: finalPass
+        // ১. চেক করা যে এই নামে কেউ আগে থেকেই আছে কিনা
+        const existing = await pb.collection('app_users').getList(1, 1, { filter: `username = "${uname}"` });
+        
+        if(existing.items.length > 0) {
+            errBox.innerText = "এই নাম আগেই ব্যবহার করা হয়েছে। অন্য নাম দিন অথবা লগইন করুন।";
+            errBox.style.display = 'block';
+            btn.innerText = "Register";
+            return;
+        }
+
+        // ২. নতুন ইউজার তৈরি করা
+        const record = await pb.collection('app_users').create({ 
+          username: uname, 
+          password: pass, 
+          learnedWords: [], 
+          streak: 1 
         });
         
-        // If created, automatically log them in
-        await pb.collection('usersd').authWithPassword(fakeEmail, finalPass);
-        
-        currentUsername = pb.authStore.model.username;
-        window.closeAuthModal();
-        enableUserModeUI(pb.authStore.model);
+        // সফলভাবে তৈরি হলে লগইন করে দেব
+        finalizeLogin(record);
         window.showToast("Registration Successful!");
+        
       } catch(err) {
-        console.error("PocketBase Create Error:", err);
+        console.error("Manual Register Error:", err);
         errBox.innerText = parsePbError(err);
         errBox.style.display = 'block';
       }
       btn.innerText = "Register";
     };
 
-    // --- Login Logic ---
     window.handleLogin = async function() {
       if(!pb) return window.showToast("Database not initialized yet.");
       const btn = document.getElementById('auth-log-btn'); 
-      const unameRaw = document.getElementById('auth-username').value.trim();
-      const passRaw = document.getElementById('auth-password').value.trim();
+      const uname = document.getElementById('auth-username').value.trim();
+      const pass = document.getElementById('auth-password').value.trim();
       const errBox = document.getElementById('auth-error');
       
-      if(!unameRaw || !passRaw) return window.showToast("Enter both fields to log in."); 
+      if(!uname || !pass) return window.showToast("নাম এবং পাসওয়ার্ড দুটিই দিন।");
       
       btn.innerText = "Connecting...";
       errBox.style.display = 'none';
 
-      const safeName = unameRaw.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
-      const fakeEmail = safeName + "@german.app";
-      const finalPass = passRaw + PB_PASS_PADDING;
-
       try {
-        await pb.collection('usersd').authWithPassword(fakeEmail, finalPass);
-        currentUsername = pb.authStore.model.username;
-        window.closeAuthModal();
-        enableUserModeUI(pb.authStore.model);
-        window.showToast("Logged in successfully!");
-      } catch(e) {
-        console.error("Login Error:", e);
-        if (e.status === 0) {
-           errBox.innerText = parsePbError(e);
-        } else {
-           errBox.innerText = "ভুল ইউজারনেম অথবা পাসওয়ার্ড!";
+        // ইউজারনেম দিয়ে ডেটা খোঁজা
+        const result = await pb.collection('app_users').getList(1, 1, { filter: `username = "${uname}"` });
+        
+        if(result.items.length === 0) {
+            errBox.innerText = "এই নামে কোনো একাউন্ট পাওয়া যায়নি!";
+            errBox.style.display = 'block';
+            btn.innerText = "Log In";
+            return;
         }
+
+        const userRecord = result.items[0];
+
+        // পাসওয়ার্ড মেলানো
+        if(userRecord.password !== pass) {
+            errBox.innerText = "ভুল পাসওয়ার্ড!";
+            errBox.style.display = 'block';
+            btn.innerText = "Log In";
+            return;
+        }
+
+        // লগইন সফল
+        finalizeLogin(userRecord);
+        window.showToast("Logged in successfully!");
+
+      } catch(e) {
+        console.error("Manual Login Error:", e);
+        errBox.innerText = parsePbError(e);
         errBox.style.display = 'block';
       }
       btn.innerText = "Log In";
     };
 
+    function finalizeLogin(record) {
+      isLoggedIn = true;
+      currentUsername = record.username;
+      currentUserId = record.id;
+      
+      // ব্রাউজারে সেভ করে রাখা যাতে পেজ রিফ্রেশ দিলেও লগইন থাকে
+      localStorage.setItem('german_app_session_id', record.id);
+      
+      window.closeAuthModal();
+      enableUserModeUI(record);
+    }
+
     window.dbLogout = function() {
-      if(pb) pb.authStore.clear();
-      isLoggedIn = false; currentUsername = ""; learnedWordsMap.clear();
+      isLoggedIn = false; 
+      currentUsername = ""; 
+      currentUserId = null;
+      learnedWordsMap.clear();
+      localStorage.removeItem('german_app_session_id');
+      
       document.getElementById('user-profile-widget').innerText = "👤 Log In / Register";
       document.getElementById('dash-username').innerText = "Guest";
       document.getElementById('stat-words').innerText = "0"; 
       document.getElementById('stat-streak').innerText = "0"; 
       document.getElementById('stat-rank').innerText = "-";
+      
       window.renderVocab(); window.nav('dashboard');
       window.showToast("Logged out successfully.");
     };
 
     async function dbSaveWords(wordsArray) {
-      if(pb && pb.authStore.isValid) { 
+      if(pb && isLoggedIn && currentUserId) { 
         try {
-          await pb.collection('usersd').update(pb.authStore.model.id, { learnedWords: wordsArray }); 
+          // Update the normal table directly
+          await pb.collection('app_users').update(currentUserId, { learnedWords: wordsArray }); 
         } catch (e) {
-          console.error("Failed to save to PocketBase:", e);
+          console.error("Failed to save words to normal DB:", e);
         }
       }
     }
@@ -802,8 +815,7 @@
     function renderAlphabet() {
       const baseGrid = document.getElementById('alpha-base-grid');
       const specialGrid = document.getElementById('alpha-special-grid');
-      baseGrid.innerHTML = '';
-      specialGrid.innerHTML = '';
+      baseGrid.innerHTML = ''; specialGrid.innerHTML = '';
 
       ALPHABET.forEach(a => {
         const letterChar = a.letter.split(' ')[0]; // Gets 'A' from 'A a'
@@ -814,12 +826,10 @@
               ${a.letter} <span style="font-size:18px; opacity:0.7;">🔊</span>
             </div>
             <div class="alpha-ipa">${a.ipa}</div>
-            
             <!-- Example Word Pronunciation -->
             <div class="alpha-ex" title="শব্দের উচ্চারণ" onclick="if('speechSynthesis' in window){ let u=new SpeechSynthesisUtterance('${a.ex}'); u.lang='de-DE'; window.speechSynthesis.speak(u); }">
               ${a.ex} <button class="audio-btn">🔊</button>
             </div>
-            
             <div class="alpha-tip">${a.tip}</div>
           </div>
         `;
@@ -869,7 +879,7 @@
               const newList = Array.from(learnedWordsMap.values()); 
               newList.push({ id: w.id, timestamp: Date.now() });
               
-              await dbSaveWords(newList); // Save to PocketBase
+              await dbSaveWords(newList); // Save to Normal PocketBase Table
               
               learnedWordsMap.set(w.id, { id: w.id, timestamp: Date.now() });
               document.getElementById('stat-words').innerText = learnedWordsMap.size;
@@ -928,22 +938,33 @@
     };
 
     // =========================================================================
-    // 🚀 INITIALIZATION (PocketBase Only)
+    // 🚀 INITIALIZATION (PocketBase Base Collection Logic)
     // =========================================================================
     window.onload = function() {
       // 1. Initial Render of static UI
       renderAlphabet();
       renderVocab();
 
-      // 2. Initialize PocketBase silently
+      // 2. Initialize PocketBase
       setTimeout(async () => {
         try {
           pb = new PocketBase('https://cfljudb.duckdns.org');
           document.getElementById('loader').style.display = 'none';
 
-          if(pb.authStore.isValid) {
-            currentUsername = pb.authStore.model.username;
-            enableUserModeUI(pb.authStore.model);
+          // Check if previously logged in (Session persistence via localStorage)
+          const savedUserId = localStorage.getItem('german_app_session_id');
+          if(savedUserId) {
+            try {
+              const userRecord = await pb.collection('app_users').getOne(savedUserId);
+              if(userRecord) {
+                 currentUserId = userRecord.id;
+                 currentUsername = userRecord.username;
+                 enableUserModeUI(userRecord);
+              }
+            } catch(sessionErr) {
+              console.log("Old session invalid, clearing.");
+              localStorage.removeItem('german_app_session_id');
+            }
           }
 
           // Fetch Videos
@@ -952,9 +973,9 @@
             window.renderVideos(vids); 
           } catch(e) { console.log("Video collection empty or not accessible."); }
 
-          // Fetch Leaderboard
+          // Fetch Leaderboard from custom app_users collection
           try { 
-            const users = await pb.collection('usersd').getFullList({ sort: '-streak' }); 
+            const users = await pb.collection('app_users').getFullList({ sort: '-streak' }); 
             window.renderLeaderboard(users); 
           } catch(e) { console.log("Leaderboard not accessible."); }
 
