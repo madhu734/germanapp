@@ -169,13 +169,13 @@
   <!-- App Loader -->
   <div id="loader">
     <div style="font-size: 40px; margin-bottom: 20px;">🇩🇪</div>
-    <div id="loader-text">Connecting to System...</div>
+    <div id="loader-text">Connecting to Database...</div>
   </div>
 
   <!-- Toast Notification -->
   <div id="toast">Message</div>
 
-  <!-- Authentication Modal (Custom Manual Auth) -->
+  <!-- Authentication Modal (Custom Manual Auth for Base Collection) -->
   <div id="auth-modal" class="modal-overlay">
     <div class="modal-box">
       <div style="display: flex; justify-content: flex-end; margin-bottom: -20px;">
@@ -185,7 +185,7 @@
       <h2 style="margin-bottom: 8px;">Log In / Register</h2>
       <p style="color: var(--muted); margin-bottom: 24px; font-size: 14px;">Sign in to track your progress.</p>
       
-      <input type="text" id="auth-username" class="input" placeholder="Username" style="text-align: center;">
+      <input type="text" id="auth-username" class="input" placeholder="Enter Username (Spaces allowed)" style="text-align: center;">
       <input type="password" id="auth-password" class="input" placeholder="Password" style="text-align: center;" onkeydown="if(event.key==='Enter') handleLogin()">
       
       <div style="display: flex; gap: 10px; margin-top: 12px;">
@@ -448,7 +448,7 @@
   </main>
 
   <!-- ══════════════════════════════════════════════════════════════
-       DATA & JAVASCRIPT LOGIC (CUSTOM BASE AUTH)
+       DATA & JAVASCRIPT LOGIC (ONLY PocketBase)
   ══════════════════════════════════════════════════════════════ -->
   <script>
     // --- Data: Detailed Alphabet Array ---
@@ -621,18 +621,21 @@
     window.handleRegister = async function() {
       if(!pb) return window.showToast("Database not initialized yet.");
       const btn = document.getElementById('auth-reg-btn'); 
-      const uname = document.getElementById('auth-username').value.trim();
+      const unameRaw = document.getElementById('auth-username').value.trim();
       const pass = document.getElementById('auth-password').value.trim();
       const errBox = document.getElementById('auth-error');
       
-      if(!uname || !pass) return window.showToast("নাম এবং পাসওয়ার্ড দুটিই দিন।");
+      if(!unameRaw || !pass) return window.showToast("নাম এবং পাসওয়ার্ড দুটিই দিন।");
       
       btn.innerText = "Registering...";
       errBox.style.display = 'none';
 
+      // Remove double quotes which break the filter query, allow spaces
+      const safeName = unameRaw.replace(/"/g, '').trim();
+
       try {
         // ১. চেক করা যে এই নামে কেউ আগে থেকেই আছে কিনা
-        const existing = await pb.collection('app_users').getList(1, 1, { filter: `username = "${uname}"` });
+        const existing = await pb.collection('app_users').getList(1, 1, { filter: `username = "${safeName}"` });
         
         if(existing.items.length > 0) {
             errBox.innerText = "এই নাম আগেই ব্যবহার করা হয়েছে। অন্য নাম দিন অথবা লগইন করুন।";
@@ -643,7 +646,7 @@
 
         // ২. নতুন ইউজার তৈরি করা
         const record = await pb.collection('app_users').create({ 
-          username: uname, 
+          username: safeName, 
           password: pass, 
           learnedWords: [], 
           streak: 1 
@@ -664,18 +667,20 @@
     window.handleLogin = async function() {
       if(!pb) return window.showToast("Database not initialized yet.");
       const btn = document.getElementById('auth-log-btn'); 
-      const uname = document.getElementById('auth-username').value.trim();
+      const unameRaw = document.getElementById('auth-username').value.trim();
       const pass = document.getElementById('auth-password').value.trim();
       const errBox = document.getElementById('auth-error');
       
-      if(!uname || !pass) return window.showToast("নাম এবং পাসওয়ার্ড দুটিই দিন।");
+      if(!unameRaw || !pass) return window.showToast("নাম এবং পাসওয়ার্ড দুটিই দিন।");
       
       btn.innerText = "Connecting...";
       errBox.style.display = 'none';
 
+      const safeName = unameRaw.replace(/"/g, '').trim();
+
       try {
         // ইউজারনেম দিয়ে ডেটা খোঁজা
-        const result = await pb.collection('app_users').getList(1, 1, { filter: `username = "${uname}"` });
+        const result = await pb.collection('app_users').getList(1, 1, { filter: `username = "${safeName}"` });
         
         if(result.items.length === 0) {
             errBox.innerText = "এই নামে কোনো একাউন্ট পাওয়া যায়নি!";
@@ -931,8 +936,8 @@
     window.renderLeaderboard = function(users) {
       const tbody = document.getElementById('leaderboard-body'); tbody.innerHTML = '';
       users.forEach((u, i) => {
-        if(isLoggedIn && u.username === currentUsername) document.getElementById('stat-rank').innerText = `#${i+1}`;
-        const isMe = isLoggedIn && u.username === currentUsername;
+        if(isLoggedIn && u.id === currentUserId) document.getElementById('stat-rank').innerText = `#${i+1}`;
+        const isMe = isLoggedIn && u.id === currentUserId;
         tbody.innerHTML += `<tr style="${isMe ? 'background: rgba(240,192,64,0.1)' : ''}"><td style="font-weight:bold; color:var(--accent)">#${i+1}</td><td style="font-weight:bold">${u.username} ${isMe?'(You)':''}</td><td>${u.learnedWords?.length || 0}</td></tr>`;
       });
     };
@@ -948,7 +953,7 @@
       // 2. Initialize PocketBase
       setTimeout(async () => {
         try {
-          pb = new PocketBase('https://cfljudb.duckdns.org');
+          pb = new PocketBase('https://efljudb.duckdns.org');
           document.getElementById('loader').style.display = 'none';
 
           // Check if previously logged in (Session persistence via localStorage)
