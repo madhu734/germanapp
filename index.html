@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>German Practice</title>
   <!-- Favicon (German Flag) -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇩🇪</text></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇩🇪</text></svg>">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+
   <!-- PocketBase CDN ONLY -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.21.1/pocketbase.umd.min.js"></script>
 
@@ -15,158 +19,1078 @@
     /* ══════════════════════════════════════════════════════════════
        GLOBAL STYLES & VARIABLES
     ══════════════════════════════════════════════════════════════ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #080c12; --surface: #0f1520; --card: #141c2b; --border: #1e2d45;
-      --text: #d4dde8; --muted: #5a7090; --accent: #f0c040; --accent2: #3b82f6;
-      --der: #3b9ae8; --die: #e8507a; --das: #38c984;
-      --verb: #a78bfa; --conj: #fb923c; --adv: #22d3ee; --pron: #f472b6; --adj: #facc15;
-      --font-head: 'Sora', sans-serif; --font-mono: 'DM Mono', monospace;
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    body { background: var(--bg); color: var(--text); font-family: var(--font-head); display: flex; height: 100vh; overflow: hidden; }
+    :root {
+      --bg: #080c12;
+      --surface: #0f1520;
+      --card: #141c2b;
+      --border: #1e2d45;
+      --text: #d4dde8;
+      --muted: #5a7090;
+      --accent: #f0c040;
+      --accent2: #3b82f6;
+      --der: #3b9ae8;
+      --die: #e8507a;
+      --das: #38c984;
+      --verb: #a78bfa;
+      --conj: #fb923c;
+      --adv: #22d3ee;
+      --pron: #f472b6;
+      --adj: #facc15;
+      --font-head: 'Sora', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-head);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
 
     /* ── Modal Screens ── */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(8,12,18,0.9); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-    .modal-box { background: var(--surface); width: 90%; max-width: 400px; border-radius: 16px; border: 1px solid var(--border); padding: 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: center; max-height: 90vh; overflow-y: auto; }
-    
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 12, 18, 0.9);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-box {
+      background: var(--surface);
+      width: 90%;
+      max-width: 400px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
     /* ── Sidebar ── */
-    .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 16px; flex-shrink: 0; z-index: 10; overflow-y: auto; transition: 0.3s; }
-    .sidebar-brand { font-size: 19px; font-weight: 700; color: var(--accent); padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; letter-spacing: -0.5px; }
-    .sidebar-brand span { color: var(--text); }
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--muted); transition: 0.15s; border: 1px solid transparent; margin-bottom: 4px; }
-    .nav-item:hover { background: var(--card); color: var(--text); }
-    .nav-item.active { background: var(--card); color: var(--accent); border-color: var(--border); }
-    .nav-icon { font-size: 18px; width: 22px; text-align: center; }
+    .sidebar {
+      width: 240px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      flex-shrink: 0;
+      z-index: 10;
+      overflow-y: auto;
+      transition: 0.3s;
+    }
 
-    .lang-toggle { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 8px; }
-    .lang-btn { flex: 1; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: var(--muted); font-family: var(--font-head); transition: 0.15s; }
-    .lang-btn.active { background: var(--accent); color: #000; }
+    .sidebar-brand {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--accent);
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
 
-    .user-profile-btn { margin-top: auto; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; color: #fff; }
-    .user-profile-btn:hover { border-color: var(--accent); }
+    .sidebar-brand span {
+      color: var(--text);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      transition: 0.15s;
+      border: 1px solid transparent;
+      margin-bottom: 4px;
+    }
+
+    .nav-item:hover {
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--card);
+      color: var(--accent);
+      border-color: var(--border);
+    }
+
+    .nav-icon {
+      font-size: 18px;
+      width: 22px;
+      text-align: center;
+    }
+
+    .lang-toggle {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .lang-btn {
+      flex: 1;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font-head);
+      transition: 0.15s;
+    }
+
+    .lang-btn.active {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .user-profile-btn {
+      margin-top: auto;
+      padding: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      color: #fff;
+    }
+
+    .user-profile-btn:hover {
+      border-color: var(--accent);
+    }
 
     /* ── Main Area ── */
-    .main { flex: 1; padding: 32px 40px; overflow-y: auto; position: relative; }
-    .page { display: none; animation: fadeIn 0.3s ease; }
-    .page.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .main {
+      flex: 1;
+      padding: 32px 40px;
+      overflow-y: auto;
+      position: relative;
+    }
 
-    .page-header { margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-end; }
-    .page-title { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
-    .page-subtitle { font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+    .page {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .page-header {
+      margin-bottom: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .page-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    .page-subtitle {
+      font-size: 13.5px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
 
     /* ── Layout & Cards ── */
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-    .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 14px; }
-    
-    .stat-card { position: relative; overflow: hidden; padding: 20px; }
-    .stat-card::before { content: ''; position: absolute; top:0; left:0; right:0; height:3px; }
-    .stat-val { font-size: 36px; font-weight: 700; color: #fff; font-family: var(--font-mono); margin-top: 8px; }
-    .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .stat-card {
+      position: relative;
+      overflow: hidden;
+      padding: 20px;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .stat-val {
+      font-size: 36px;
+      font-weight: 700;
+      color: #fff;
+      font-family: var(--font-mono);
+      margin-top: 8px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 600;
+    }
 
     /* ── Form Elements ── */
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border-radius: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer; border: none; font-family: var(--font-head); transition: 0.2s; }
-    .btn-accent { background: var(--accent); color: #000; }
-    .btn-accent:hover:not(:disabled) { background: #f5d060; }
-    .btn-accent:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
-    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
-    .btn-success { background: rgba(56,201,132,0.15); color: var(--das); border: 1px solid rgba(56,201,132,0.3); }
-    .btn-danger { background: rgba(232,80,122,0.15); color: var(--die); border: 1px solid rgba(232,80,122,0.3); }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: var(--font-head);
+      transition: 0.2s;
+    }
 
-    .input { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 8px; font-family: var(--font-head); font-size: 14px; outline: none; transition: 0.2s; width: 100%; margin-bottom: 12px; }
-    .input:focus { border-color: var(--accent); }
-    .pill { padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: 0.15s; }
-    .pill.active { background: var(--accent); color: #000; border-color: var(--accent); }
+    .btn-accent {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .btn-accent:hover:not(:disabled) {
+      background: #f5d060;
+    }
+
+    .btn-accent:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-success {
+      background: rgba(56, 201, 132, 0.15);
+      color: var(--das);
+      border: 1px solid rgba(56, 201, 132, 0.3);
+    }
+
+    .btn-danger {
+      background: rgba(232, 80, 122, 0.15);
+      color: var(--die);
+      border: 1px solid rgba(232, 80, 122, 0.3);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-family: var(--font-head);
+      font-size: 14px;
+      outline: none;
+      transition: 0.2s;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+
+    .input:focus {
+      border-color: var(--accent);
+    }
+
+    .pill {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      transition: 0.15s;
+    }
+
+    .pill.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
 
     /* ── Tables & Badges ── */
-    table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; font-size: 11px; text-transform: uppercase; color: var(--muted); padding: 12px; border-bottom: 1px solid var(--border); font-weight: 600; letter-spacing: 0.8px; }
-    td { padding: 12px; font-size: 14px; border-bottom: 1px solid rgba(30,45,69,0.5); }
-    
-    .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-family: var(--font-mono); text-transform: uppercase; font-weight: 600; }
-    .b-der { background: rgba(59,154,232,0.15); color: var(--der); border: 1px solid rgba(59,154,232,0.3); }
-    .b-die { background: rgba(232,80,122,0.15); color: var(--die); border: 1px solid rgba(232,80,122,0.3); }
-    .b-das { background: rgba(56,201,132,0.15); color: var(--das); border: 1px solid rgba(56,201,132,0.3); }
-    .b-verb { background: rgba(167,139,250,0.15); color: var(--verb); border: 1px solid rgba(167,139,250,0.3); }
-    .b-noun { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid rgba(255,255,255,0.1); }
-    .c-der { color: var(--der); } .c-die { color: var(--die); } .c-das { color: var(--das); }
-    .vocab-de { font-family: var(--font-mono); font-weight: 500; font-size: 15px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
 
-    /* ── Alphabet Hub ── */
-    .alpha-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 16px; }
-    .alpha-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; transition: 0.2s; display: flex; flex-direction: column; justify-content: center; }
-    .alpha-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .alpha-letter { font-size: 32px; font-weight: 700; color: #fff; font-family: var(--font-mono); cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;}
-    .alpha-letter:hover { color: var(--accent); }
-    .alpha-ipa { font-size: 13px; color: var(--accent); font-family: var(--font-mono); margin: 6px 0; }
-    .alpha-ex { font-size: 15px; color: var(--text); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: 0.2s;}
-    .alpha-ex:hover { color: var(--accent); }
-    .audio-btn { background: rgba(255,255,255,0.1); border: none; cursor: pointer; color: var(--text); font-size: 12px; padding: 4px; border-radius: 50%; transition: 0.2s; display: inline-flex; pointer-events: none;}
-    .alpha-tip { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.4; }
+    th {
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      letter-spacing: 0.8px;
+    }
+
+    td {
+      padding: 12px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(30, 45, 69, 0.5);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .b-der {
+      background: rgba(59, 154, 232, 0.15);
+      color: var(--der);
+      border: 1px solid rgba(59, 154, 232, 0.3);
+    }
+
+    .b-die {
+      background: rgba(232, 80, 122, 0.15);
+      color: var(--die);
+      border: 1px solid rgba(232, 80, 122, 0.3);
+    }
+
+    .b-das {
+      background: rgba(56, 201, 132, 0.15);
+      color: var(--das);
+      border: 1px solid rgba(56, 201, 132, 0.3);
+    }
+
+    .b-verb {
+      background: rgba(167, 139, 250, 0.15);
+      color: var(--verb);
+      border: 1px solid rgba(167, 139, 250, 0.3);
+    }
+
+    .b-noun {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .c-der {
+      color: var(--der);
+    }
+
+    .c-die {
+      color: var(--die);
+    }
+
+    .c-das {
+      color: var(--das);
+    }
+
+    .vocab-de {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    /* ── Alphabet Hub (Phonetics) ── */
+    .alpha-section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 28px 0 14px;
+    }
+
+    .alpha-section-header:first-child {
+      margin-top: 0;
+    }
+
+    .alpha-section-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #000;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .alpha-section-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text);
+    }
+
+    .alpha-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .alpha-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .alpha-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      opacity: 0;
+      background: linear-gradient(135deg, rgba(240, 192, 64, 0.04), transparent 60%);
+      transition: opacity 0.25s;
+      pointer-events: none;
+    }
+
+    .alpha-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .alpha-card:hover::after {
+      opacity: 1;
+    }
+
+    .alpha-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .alpha-letter {
+      font-size: 30px;
+      font-weight: 700;
+      color: #fff;
+      font-family: var(--font-mono);
+      line-height: 1;
+    }
+
+    .alpha-speak-btn {
+      background: rgba(240, 192, 64, 0.12);
+      border: 1px solid rgba(240, 192, 64, 0.25);
+      color: var(--accent);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 15px;
+      transition: 0.2s;
+      flex-shrink: 0;
+    }
+
+    .alpha-speak-btn:hover {
+      background: var(--accent);
+      color: #000;
+      transform: scale(1.1);
+    }
+
+    .alpha-card-mid {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+
+    .alpha-ipa {
+      font-size: 13px;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      margin-bottom: 4px;
+    }
+
+    .alpha-tip {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .alpha-card-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .alpha-examples-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .alpha-ex-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    .alpha-ex-row:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .alpha-ex-audio {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--text);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.2s;
+      flex-shrink: 0;
+    }
+
+    .alpha-ex-audio:hover {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .alpha-ex-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .alpha-ex-de {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .alpha-ex-en {
+      font-size: 11px;
+      color: var(--muted);
+    }
 
     /* ── Word Certification Modal ── */
-    .cert-step { display: none; }
-    .cert-step.active { display: block; animation: fadeIn 0.3s; }
-    .cert-word { font-size: 32px; font-weight: 700; color: var(--accent); font-family: var(--font-mono); text-align: center; margin-bottom: 24px; }
-    .cert-feedback { padding: 12px; border-radius: 8px; font-weight: 600; text-align: center; margin-bottom: 16px; display: none; }
+    .cert-step {
+      display: none;
+    }
+
+    .cert-step.active {
+      display: block;
+      animation: fadeIn 0.3s;
+    }
+
+    .cert-word {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .cert-feedback {
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 16px;
+      display: none;
+    }
 
     /* ── Flashcards ── */
-    .flashcard-scene { perspective: 1000px; width: 100%; max-width: 500px; height: 260px; margin: 0 auto; cursor: pointer; }
-    .flashcard-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.5s; }
-    .flashcard-inner.flipped { transform: rotateY(180deg); }
-    .flashcard-face { position: absolute; inset: 0; backface-visibility: hidden; background: var(--card); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
-    .flashcard-back { transform: rotateY(180deg); background: rgba(240,192,64,0.05); border-color: rgba(240,192,64,0.3); }
-    
-    /* Loader & Utils */
-    #loader { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: var(--accent); font-size: 20px; font-weight: bold; }
-    .lang-en { display: inline; } .lang-bn { display: none; }
-    body.bn-mode .lang-en { display: none; } body.bn-mode .lang-bn { display: inline; }
+    .flashcard-scene {
+      perspective: 1000px;
+      width: 100%;
+      max-width: 500px;
+      height: 260px;
+      margin: 0 auto;
+      cursor: pointer;
+    }
 
-    /* Video Player */
-    .video-layout { display: flex; gap: 24px; height: calc(100vh - 160px); }
-    .video-player { flex: 1; background: #000; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .video-list { width: 340px; background: var(--surface); border-radius: 16px; border: 1px solid var(--border); padding: 16px; overflow-y: auto; }
-    .video-item { padding: 14px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; margin-bottom: 10px; transition: 0.2s; }
-    .video-item:hover { background: var(--card); }
-    .video-item.active { background: var(--card); border-color: var(--accent); }
-    .v-title { font-size: 14.5px; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.4; }
-    .v-meta { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.5s;
+    }
+
+    .flashcard-inner.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .flashcard-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .flashcard-back {
+      transform: rotateY(180deg);
+      background: rgba(240, 192, 64, 0.05);
+      border-color: rgba(240, 192, 64, 0.3);
+    }
+
+    /* Loader & Utils */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      color: var(--accent);
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .lang-en {
+      display: inline;
+    }
+
+    .lang-bn {
+      display: none;
+    }
+
+    body.bn-mode .lang-en {
+      display: none;
+    }
+
+    body.bn-mode .lang-bn {
+      display: inline;
+    }
+
+    /* LMS Video Course Layout */
+    .lms-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
+      height: calc(100vh - 160px);
+    }
+
+    .lms-sidebar {
+      background: var(--surface);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .unit-accordion {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .unit-header {
+      padding: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card);
+      transition: background 0.2s;
+      font-size: 14.5px;
+    }
+
+    .unit-header:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .unit-content {
+      display: none;
+      background: var(--surface);
+    }
+
+    .unit-content.open {
+      display: block;
+    }
+
+    .lecture-item {
+      padding: 12px 16px 12px 24px;
+      font-size: 13.5px;
+      cursor: pointer;
+      color: var(--muted);
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+      line-height: 1.4;
+    }
+
+    .lecture-item:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .lecture-item.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: rgba(240, 192, 64, 0.08);
+      font-weight: 500;
+    }
+
+    .lms-main {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .lms-player-container {
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      aspect-ratio: 16 / 9;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      flex-shrink: 0;
+    }
+
+    .lms-tabs {
+      display: flex;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin-top: 8px;
+    }
+
+    .lms-tab-btn {
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      font-family: var(--font-head);
+    }
+
+    .lms-tab-btn:hover {
+      color: var(--text);
+    }
+
+    .lms-tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .lms-tab-content {
+      display: none;
+      animation: fadeIn 0.3s;
+      padding-top: 16px;
+    }
+
+    .lms-tab-content.active {
+      display: block;
+    }
+
+    /* Quiz Engine Styles */
+    .quiz-question {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .quiz-option {
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 14px;
+      text-align: left;
+      color: var(--text);
+      font-family: var(--font-head);
+    }
+
+    .quiz-option:hover:not(:disabled) {
+      border-color: var(--muted);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .quiz-option.correct {
+      background: rgba(56, 201, 132, 0.15);
+      border-color: var(--das);
+      color: var(--das);
+    }
+
+    .quiz-option.wrong {
+      background: rgba(232, 80, 122, 0.15);
+      border-color: var(--die);
+      color: var(--die);
+    }
+
+    .quiz-result-card {
+      text-align: center;
+      padding: 32px;
+    }
+
+    .quiz-score {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+      font-family: var(--font-mono);
+    }
 
     /* AI Chat */
-    .chat-window { height: 400px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px 12px 0 0; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-    .msg { display: flex; gap: 12px; }
-    .msg-user { flex-direction: row-reverse; }
-    .msg-bubble { max-width: 75%; padding: 12px 16px; border-radius: 12px; font-size: 14.5px; line-height: 1.6; }
-    .msg-tutor .msg-bubble { background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 4px 12px 12px 12px; }
-    .msg-user .msg-bubble { background: rgba(240,192,64,0.15); border: 1px solid rgba(240,192,64,0.25); color: var(--text); border-radius: 12px 4px 12px 12px; }
-    .msg-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); }
-    
+    .chat-window {
+      height: 400px;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px 12px 0 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .msg {
+      display: flex;
+      gap: 12px;
+    }
+
+    .msg-user {
+      flex-direction: row-reverse;
+    }
+
+    .msg-bubble {
+      max-width: 75%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14.5px;
+      line-height: 1.6;
+    }
+
+    .msg-tutor .msg-bubble {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 4px 12px 12px 12px;
+    }
+
+    .msg-user .msg-bubble {
+      background: rgba(240, 192, 64, 0.15);
+      border: 1px solid rgba(240, 192, 64, 0.25);
+      color: var(--text);
+      border-radius: 12px 4px 12px 12px;
+    }
+
+    .msg-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+
     /* Toast Notification */
-    #toast { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: #000; padding: 12px 24px; border-radius: 8px; font-weight: bold; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--accent);
+      color: #000;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: bold;
+      z-index: 9999;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
 
     /* Next Batch Trigger Container */
-    #next-batch-trigger { display: none; background: rgba(56,201,132,0.1); border: 1px dashed var(--das); border-radius: 12px; padding: 32px; text-align: center; margin-top: 24px; }
+    #next-batch-trigger {
+      display: none;
+      background: rgba(56, 201, 132, 0.1);
+      border: 1px dashed var(--das);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      margin-top: 24px;
+    }
 
     @media (max-width: 768px) {
-      .sidebar { width:70px; padding:16px 8px; }
-      .sidebar-brand span, .nav-label, .user-profile-btn { display:none; }
-      .sidebar-brand { font-size: 14px; text-align: center; }
-      .nav-item { justify-content:center; padding: 12px 0; }
-      .main { padding: 20px 16px; }
-      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-      .video-layout { flex-direction: column; height: auto; }
-      .video-player { height: 250px; }
-      .video-list { width: 100%; height: 300px; }
+      .sidebar {
+        width: 70px;
+        padding: 16px 8px;
+      }
+
+      .sidebar-brand span,
+      .nav-label,
+      .user-profile-btn {
+        display: none;
+      }
+
+      .sidebar-brand {
+        font-size: 14px;
+        text-align: center;
+      }
+
+      .nav-item {
+        justify-content: center;
+        padding: 12px 0;
+      }
+
+      .main {
+        padding: 20px 16px;
+      }
+
+      .grid-2,
+      .grid-3,
+      .grid-4 {
+        grid-template-columns: 1fr;
+      }
+
+      .lms-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .lms-sidebar {
+        max-height: 300px;
+      }
     }
   </style>
 </head>
+
 <body>
 
   <!-- App Loader -->
@@ -185,18 +1109,105 @@
         <span style="cursor: pointer; color: var(--muted); font-size: 20px;" onclick="closeAuthModal()">✕</span>
       </div>
       <div style="font-size: 40px; margin-bottom: 16px;">🇩🇪</div>
-      <h2 style="margin-bottom: 8px;">Log In / Register</h2>
-      <p style="color: var(--muted); margin-bottom: 24px; font-size: 14px;">Sign in to track your progress. Only 5 digits needed!</p>
-      
-      <input type="text" id="auth-username" class="input" placeholder="Username (no spaces preferred)" style="text-align: center;">
-      <input type="password" id="auth-password" class="input" placeholder="Password (min 5 chars)" style="text-align: center;" onkeydown="if(event.key==='Enter') handleLogin()">
-      
-      <div style="display: flex; gap: 10px; margin-top: 12px;">
-        <button class="btn btn-outline" style="flex: 1;" onclick="handleRegister()" id="auth-reg-btn">Register</button>
-        <button class="btn btn-accent" style="flex: 1;" onclick="handleLogin()" id="auth-log-btn">Log In</button>
+
+      <!-- ═══ LOGIN VIEW ═══ -->
+      <div id="auth-view-login">
+        <h2 style="margin-bottom: 8px;">Welcome Back</h2>
+        <p style="color: var(--muted); margin-bottom: 24px; font-size: 14px;">Sign in with your username or email.</p>
+
+        <input type="text" id="auth-login-identity" class="input" placeholder="Username or Email"
+          style="text-align: center;">
+        <input type="password" id="auth-login-password" class="input" placeholder="Password (min 8 chars)"
+          style="text-align: center;" onkeydown="if(event.key==='Enter') handleLogin()">
+
+        <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="handleLogin()"
+          id="auth-log-btn">Log In</button>
+
+        <div style="margin-top: 14px; font-size: 13px;">
+          <span style="color: var(--die); cursor: pointer; opacity: 0.8; transition: 0.2s;"
+            onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8"
+            onclick="switchAuthView('forgot')">Forgot Password?</span>
+        </div>
+        <div
+          style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted);">
+          Don't have an account? <span style="color: var(--accent); cursor: pointer; font-weight: 600;"
+            onclick="switchAuthView('register')">Register</span>
+        </div>
       </div>
 
-      <div id="auth-error" style="background: rgba(232,80,122,0.1); border: 1px solid var(--die); color: var(--die); padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 16px; display: none; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap;"></div>
+      <!-- ═══ REGISTER VIEW ═══ -->
+      <div id="auth-view-register" style="display: none;">
+        <h2 style="margin-bottom: 8px;">Create Account</h2>
+        <p style="color: var(--muted); margin-bottom: 24px; font-size: 14px;">Use a real email — you'll need it for
+          password recovery.</p>
+
+        <input type="text" id="auth-reg-username" class="input" placeholder="Username" style="text-align: center;">
+        <input type="email" id="auth-reg-email" class="input" placeholder="Email (must be valid for recovery)"
+          style="text-align: center;">
+        <input type="password" id="auth-reg-password" class="input" placeholder="Password (min 8 characters)"
+          style="text-align: center;" onkeydown="if(event.key==='Enter') handleRegister()">
+
+        <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="handleRegister()"
+          id="auth-reg-btn">Register</button>
+
+        <div
+          style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted);">
+          Already have an account? <span style="color: var(--accent); cursor: pointer; font-weight: 600;"
+            onclick="switchAuthView('login')">Log In</span>
+        </div>
+      </div>
+
+      <!-- ═══ FORGOT PASSWORD VIEW ═══ -->
+      <div id="auth-view-forgot" style="display: none;">
+        <h2 style="margin-bottom: 8px;">Reset Password</h2>
+        <p style="color: var(--muted); margin-bottom: 24px; font-size: 14px;">Enter your registered email. We'll send a
+          reset link via PocketBase.</p>
+
+        <input type="email" id="auth-forgot-email" class="input" placeholder="Your registered email"
+          style="text-align: center;" onkeydown="if(event.key==='Enter') handlePasswordReset()">
+
+        <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="handlePasswordReset()"
+          id="auth-reset-btn">Send Reset Link</button>
+
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px;">
+          <span style="color: var(--accent); cursor: pointer; font-weight: 600;" onclick="switchAuthView('login')">←
+            Back to Login</span>
+        </div>
+      </div>
+
+      <!-- ═══ SUCCESS MESSAGE (reusable) ═══ -->
+      <div id="auth-success"
+        style="background: rgba(56,201,132,0.1); border: 1px solid var(--das); color: var(--das); padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 16px; display: none; line-height: 1.4;">
+      </div>
+
+      <!-- ═══ ERROR MESSAGE ═══ -->
+      <div id="auth-error"
+        style="background: rgba(232,80,122,0.1); border: 1px solid var(--die); color: var(--die); padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 16px; display: none; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap;">
+      </div>
+    </div>
+  </div>
+
+  <!-- New Password Modal (from email link) -->
+  <div id="new-password-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: -20px;">
+        <span style="cursor: pointer; color: var(--muted); font-size: 20px;" onclick="closeNewPasswordModal()">✕</span>
+      </div>
+      <div style="font-size: 40px; margin-bottom: 16px;">🔐</div>
+      <h2 style="margin-bottom: 8px;">Set New Password</h2>
+      <p style="color: var(--muted); margin-bottom: 24px; font-size: 14px;">Please enter your new password below.</p>
+
+      <input type="password" id="np-password" class="input" placeholder="New Password (min 8 chars)"
+        style="text-align: center;">
+      <input type="password" id="np-confirm" class="input" placeholder="Confirm New Password"
+        style="text-align: center;" onkeydown="if(event.key==='Enter') handleConfirmPasswordReset()">
+
+      <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="handleConfirmPasswordReset()"
+        id="np-btn">Save Password</button>
+
+      <div id="np-error"
+        style="background: rgba(232,80,122,0.1); border: 1px solid var(--die); color: var(--die); padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 16px; display: none; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap;">
+      </div>
     </div>
   </div>
 
@@ -205,10 +1216,17 @@
     <div class="modal-box" style="max-width: 500px;">
       <div style="display: flex; justify-content: space-between; align-items:center; margin-bottom: 16px;">
         <h2 style="margin:0;">🏆 Global Rank</h2>
-        <span style="cursor: pointer; color: var(--muted); font-size: 20px;" onclick="document.getElementById('leaderboard-modal').style.display='none'">✕</span>
+        <span style="cursor: pointer; color: var(--muted); font-size: 20px;"
+          onclick="document.getElementById('leaderboard-modal').style.display='none'">✕</span>
       </div>
       <table style="text-align: left;">
-        <thead><tr><th style="width: 60px;">Rank</th><th>User</th><th>Words</th></tr></thead>
+        <thead>
+          <tr>
+            <th style="width: 60px;">Rank</th>
+            <th>User</th>
+            <th>Words</th>
+          </tr>
+        </thead>
         <tbody id="leaderboard-body"></tbody>
       </table>
     </div>
@@ -217,36 +1235,44 @@
   <!-- Certification Modal (Word Test) -->
   <div id="cert-modal" class="modal-overlay">
     <div class="modal-box" style="max-width: 500px;">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 16px; color: var(--muted); font-weight: 600;">
+      <div
+        style="display: flex; justify-content: space-between; margin-bottom: 16px; color: var(--muted); font-weight: 600;">
         <span>Step <span id="cert-step-num">1</span> of 3</span>
         <span style="cursor: pointer; font-size: 16px;" onclick="closeCertModal()">✕ Cancel</span>
       </div>
-      
+
       <div class="cert-word" id="cert-target-word">---</div>
       <div class="cert-feedback" id="cert-feedback"></div>
 
       <!-- Step 1: Meaning -->
       <div id="cert-step-1" class="cert-step active">
         <p style="margin-bottom: 16px;">What does this mean? (English or Bangla)</p>
-        <input type="text" id="cert-input-1" class="input" placeholder="Type meaning..." onkeydown="if(event.key==='Enter') verifyCertStep(1)">
-        <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="verifyCertStep(1)">Check Meaning</button>
+        <input type="text" id="cert-input-1" class="input" placeholder="Type meaning..."
+          onkeydown="if(event.key==='Enter') verifyCertStep(1)">
+        <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="verifyCertStep(1)">Check
+          Meaning</button>
       </div>
 
       <!-- Step 2: Listening / Spelling -->
       <div id="cert-step-2" class="cert-step">
         <p style="margin-bottom: 16px;">Listen carefully and type the exact German word.</p>
-        <button class="btn btn-outline" style="width: 100%; margin-bottom: 16px; font-size: 20px;" onclick="speakCertWord()">🔊 Play Audio</button>
-        <input type="text" id="cert-input-2" class="input" placeholder="Type what you hear..." onkeydown="if(event.key==='Enter') verifyCertStep(2)">
-        <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="verifyCertStep(2)">Check Spelling</button>
+        <button class="btn btn-outline" style="width: 100%; margin-bottom: 16px; font-size: 20px;"
+          onclick="speakCertWord()">🔊 Play Audio</button>
+        <input type="text" id="cert-input-2" class="input" placeholder="Type what you hear..."
+          onkeydown="if(event.key==='Enter') verifyCertStep(2)">
+        <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="verifyCertStep(2)">Check
+          Spelling</button>
       </div>
 
       <!-- Step 3: Usage / Gender -->
       <div id="cert-step-3" class="cert-step">
         <p style="margin-bottom: 16px;" id="cert-step3-instruction">Final check...</p>
-        <input type="text" id="cert-input-3" class="input" placeholder="..." onkeydown="if(event.key==='Enter') verifyCertStep(3)">
-        <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="verifyCertStep(3)">Confirm & Save</button>
+        <input type="text" id="cert-input-3" class="input" placeholder="..."
+          onkeydown="if(event.key==='Enter') verifyCertStep(3)">
+        <button class="btn btn-accent" style="width: 100%; margin-top: 8px;" onclick="verifyCertStep(3)">Confirm &
+          Save</button>
       </div>
-      
+
       <!-- Success -->
       <div id="cert-step-success" class="cert-step">
         <div style="font-size: 60px; margin-bottom: 16px;">🎉</div>
@@ -260,22 +1286,33 @@
   <!-- ── SIDEBAR ── -->
   <nav class="sidebar">
     <div class="sidebar-brand">German<span>Practice</span></div>
-    
-    <div class="nav-item active" onclick="nav('dashboard')"><span class="nav-icon">🏠</span> <span class="nav-label"><span class="lang-en">Dashboard</span><span class="lang-bn">ড্যাশবোর্ড</span></span></div>
-    <div class="nav-item" onclick="nav('vocab')"><span class="nav-icon">📚</span> <span class="nav-label"><span class="lang-en">Vocab Tracker</span><span class="lang-bn">শব্দভাণ্ডার</span></span></div>
-    <div class="nav-item" onclick="nav('videos')"><span class="nav-icon">📺</span> <span class="nav-label"><span class="lang-en">Video Courses</span><span class="lang-bn">ভিডিও কোর্স</span></span></div>
-    <div class="nav-item" onclick="nav('alphabet')"><span class="nav-icon">🔤</span> <span class="nav-label"><span class="lang-en">Alphabet Hub</span><span class="lang-bn">বর্ণমালা হাব</span></span></div>
-    <div class="nav-item" onclick="nav('bridge')"><span class="nav-icon">🌉</span> <span class="nav-label"><span class="lang-en">Grammar Bridge</span><span class="lang-bn">গ্রামার ব্রিজ</span></span></div>
-    <div class="nav-item" onclick="handleProtectedNav('practice')"><span class="nav-icon">✍️</span> <span class="nav-label"><span class="lang-en">My Words</span><span class="lang-bn">আমার শব্দ (লগইন)</span></span></div>
-    <div class="nav-item" onclick="handleProtectedNav('flashcards')"><span class="nav-icon">🃏</span> <span class="nav-label"><span class="lang-en">Flashcards</span><span class="lang-bn">ফ্ল্যাশকার্ড (লগইন)</span></span></div>
-    <div class="nav-item" onclick="nav('chat')"><span class="nav-icon">🤖</span> <span class="nav-label"><span class="lang-en">AI Tutor</span><span class="lang-bn">এআই টিউটর</span></span></div>
+
+    <div class="nav-item active" onclick="nav('dashboard')"><span class="nav-icon">🏠</span> <span
+        class="nav-label"><span class="lang-en">Dashboard</span><span class="lang-bn">ড্যাশবোর্ড</span></span></div>
+    <div class="nav-item" onclick="nav('vocab')"><span class="nav-icon">📚</span> <span class="nav-label"><span
+          class="lang-en">Vocab Tracker</span><span class="lang-bn">শব্দভাণ্ডার</span></span></div>
+    <div class="nav-item" onclick="nav('videos')"><span class="nav-icon">📺</span> <span class="nav-label"><span
+          class="lang-en">Video Courses</span><span class="lang-bn">ভিডিও কোর্স</span></span></div>
+    <div class="nav-item" onclick="nav('alphabet')"><span class="nav-icon">🔤</span> <span class="nav-label"><span
+          class="lang-en">Alphabet Hub</span><span class="lang-bn">বর্ণমালা হাব</span></span></div>
+    <div class="nav-item" onclick="nav('bridge')"><span class="nav-icon">🌉</span> <span class="nav-label"><span
+          class="lang-en">Grammar Bridge</span><span class="lang-bn">গ্রামার ব্রিজ</span></span></div>
+    <div class="nav-item" onclick="handleProtectedNav('practice')"><span class="nav-icon">✍️</span> <span
+        class="nav-label"><span class="lang-en">My Words</span><span class="lang-bn">আমার শব্দ (লগইন)</span></span>
+    </div>
+    <div class="nav-item" onclick="handleProtectedNav('flashcards')"><span class="nav-icon">🃏</span> <span
+        class="nav-label"><span class="lang-en">Flashcards</span><span class="lang-bn">ফ্ল্যাশকার্ড (লগইন)</span></span>
+    </div>
+    <div class="nav-item" onclick="nav('chat')"><span class="nav-icon">🤖</span> <span class="nav-label"><span
+          class="lang-en">AI Tutor</span><span class="lang-bn">এআই টিউটর</span></span></div>
 
     <!-- User & Language Toggle -->
     <div style="margin-top: auto;">
       <div id="user-profile-widget" class="user-profile-btn" onclick="openAuthModal()">
         👤 Log In / Register
       </div>
-      <div style="font-size:11px; color:var(--muted); text-align:center; margin:12px 0 6px; text-transform:uppercase;">Language / ভাষা</div>
+      <div style="font-size:11px; color:var(--muted); text-align:center; margin:12px 0 6px; text-transform:uppercase;">
+        Language / ভাষা</div>
       <div class="lang-toggle">
         <button id="btn-en" class="lang-btn active" onclick="setLang('en')">EN</button>
         <button id="btn-bn" class="lang-btn" onclick="setLang('bn')">বাংলা</button>
@@ -285,15 +1322,18 @@
 
   <!-- ── MAIN CONTENT ── -->
   <main class="main">
-    
+
     <!-- DASHBOARD -->
     <div id="page-dashboard" class="page active">
       <div class="page-header">
         <div>
           <h1 class="page-title">🏠 <span class="lang-en">Dashboard</span><span class="lang-bn">ড্যাশবোর্ড</span></h1>
-          <p class="page-subtitle"><span class="lang-en">Welcome,</span> <span id="dash-username" style="color: #fff; font-weight: bold;">Guest</span>! <span id="dash-prompt">Explore the app or log in to track your B1 journey.</span></p>
+          <p class="page-subtitle"><span class="lang-en">Welcome,</span> <span id="dash-username"
+              style="color: #fff; font-weight: bold;">Guest</span>! <span id="dash-prompt">Explore the app or log in to
+              track your B1 journey.</span></p>
         </div>
-        <button class="btn btn-outline" onclick="document.getElementById('leaderboard-modal').style.display='flex'">🏆 View Global Rank</button>
+        <button class="btn btn-outline" onclick="document.getElementById('leaderboard-modal').style.display='flex'">🏆
+          View Global Rank</button>
       </div>
       <div class="grid-3" style="margin-bottom: 24px;">
         <div class="card stat-card" style="border-top: 3px solid var(--accent)">
@@ -312,6 +1352,10 @@
           <div class="stat-sub">Check Leaderboard</div>
         </div>
       </div>
+
+      <!-- SRS Warning Section (dynamically populated) -->
+      <div id="srs-warning-section" style="display: none; margin-bottom: 24px;"></div>
+
       <div class="grid-3">
         <div class="card" style="cursor:pointer;" onclick="nav('vocab')">
           <div style="font-size:28px; margin-bottom:12px;">📚</div>
@@ -334,11 +1378,13 @@
     <!-- VOCAB TRACKER -->
     <div id="page-vocab" class="page">
       <div class="page-header">
-        <h1 class="page-title">📚 <span class="lang-en">Vocab Tracker</span><span class="lang-bn">শব্দভাণ্ডার ট্র্যাকার</span></h1>
+        <h1 class="page-title">📚 <span class="lang-en">Vocab Tracker</span><span class="lang-bn">শব্দভাণ্ডার
+            ট্র্যাকার</span></h1>
         <p class="page-subtitle">Learn vocabulary synced directly from your database and n8n workflows.</p>
       </div>
       <div style="display:flex; gap:12px; margin-bottom: 20px; flex-wrap: wrap;">
-        <input type="text" id="search-input" class="input" placeholder="Search German or English..." style="max-width: 300px; margin-bottom:0;">
+        <input type="text" id="search-input" class="input" placeholder="Search German or English..."
+          style="max-width: 300px; margin-bottom:0;">
         <div style="display:flex; gap:6px; flex-wrap:wrap;" id="cat-filters">
           <button class="pill active" onclick="setVocabFilter('all')">All</button>
           <button class="pill" onclick="setVocabFilter('noun')">Noun</button>
@@ -348,12 +1394,23 @@
           <button class="pill" onclick="setVocabFilter('adverb')">Adv</button>
         </div>
       </div>
-      
+
       <div class="card" style="padding: 0;">
         <table>
-          <thead><tr><th style="width:50px">#</th><th>German</th><th>Translation</th><th>Type</th><th style="text-align: center; width:140px;">Action</th></tr></thead>
+          <thead>
+            <tr>
+              <th style="width:50px">#</th>
+              <th>German</th>
+              <th>Translation</th>
+              <th>Type</th>
+              <th style="text-align: center; width:140px;">Action</th>
+            </tr>
+          </thead>
           <tbody id="vocab-body">
-            <tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--muted);">Loading words from database...</td></tr>
+            <tr>
+              <td colspan="5" style="text-align:center; padding: 20px; color: var(--muted);">Loading words from
+                database...</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -361,9 +1418,12 @@
       <!-- Trigger Next Batch UI -->
       <div id="next-batch-trigger">
         <div style="font-size: 40px; margin-bottom: 10px;">🎉</div>
-        <p style="color:var(--das); font-weight:bold; font-size:18px; margin-bottom:10px;">অসাধারণ! আপনি বর্তমান ব্যাচের সবগুলো শব্দ শিখে ফেলেছেন!</p>
-        <p style="color:var(--muted); font-size:13px; margin-bottom:20px;">আপনার n8n সার্ভারকে নির্দেশ দিন আরও নতুন শব্দ জেনারেট করে ডাটাবেসে পাঠাতে।</p>
-        <button class="btn btn-accent" id="trigger-n8n-btn" onclick="triggerNextBatch()" style="padding: 12px 24px; font-size: 15px;">🚀 পরবর্তী ৫০টি শব্দ আনুন</button>
+        <p style="color:var(--das); font-weight:bold; font-size:18px; margin-bottom:10px;">অসাধারণ! আপনি বর্তমান ব্যাচের
+          সবগুলো শব্দ শিখে ফেলেছেন!</p>
+        <p style="color:var(--muted); font-size:13px; margin-bottom:20px;">আপনার n8n সার্ভারকে নির্দেশ দিন আরও নতুন শব্দ
+          জেনারেট করে ডাটাবেসে পাঠাতে।</p>
+        <button class="btn btn-accent" id="trigger-n8n-btn" onclick="triggerNextBatch()"
+          style="padding: 12px 24px; font-size: 15px;">🚀 পরবর্তী ৫০টি শব্দ আনুন</button>
       </div>
 
     </div>
@@ -372,7 +1432,8 @@
     <div id="page-practice" class="page">
       <div class="page-header">
         <div>
-          <h1 class="page-title">✍️ <span class="lang-en">My Words & Practice</span><span class="lang-bn">আমার শব্দ ও অনুশীলন</span></h1>
+          <h1 class="page-title">✍️ <span class="lang-en">My Words & Practice</span><span class="lang-bn">আমার শব্দ ও
+              অনুশীলন</span></h1>
           <p class="page-subtitle">Your certified words organized by date.</p>
         </div>
         <button class="btn btn-accent" onclick="startRandomPractice()">🎲 Random Practice Test</button>
@@ -389,7 +1450,8 @@
       <div class="flashcard-scene" onclick="toggleFlashcard()">
         <div class="flashcard-inner" id="fc-inner">
           <div class="flashcard-face">
-            <div class="f-word" id="fc-front" style="font-size: 32px; font-weight: 700; color: #fff; font-family: var(--font-mono);">---</div>
+            <div class="f-word" id="fc-front"
+              style="font-size: 32px; font-weight: 700; color: #fff; font-family: var(--font-mono);">---</div>
             <div style="font-size: 13px; color: var(--muted); margin-top: 12px;">Click to flip</div>
           </div>
           <div class="flashcard-face flashcard-back">
@@ -404,57 +1466,122 @@
       </div>
     </div>
 
-    <!-- ALPHABET HUB -->
+    <!-- ALPHABET HUB (Phonetics) -->
     <div id="page-alphabet" class="page">
       <div class="page-header">
-        <h1 class="page-title">🔤 <span class="lang-en">Alphabet Hub</span><span class="lang-bn">বর্ণমালা হাব</span></h1>
-        <p class="page-subtitle">German Alphabet with IPA & pronunciation tips. Click the letter or the word to hear the pronunciation.</p>
+        <div>
+          <h1 class="page-title">🔤 <span class="lang-en">Phonetics & Alphabet Hub</span><span
+              class="lang-bn">ধ্বনিবিদ্যা ও বর্ণমালা হাব</span></h1>
+          <p class="page-subtitle">Comprehensive German pronunciation guide. Click 🔊 to hear letters and words in
+            de-DE.</p>
+        </div>
       </div>
-      <div style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-bottom: 12px;">Base Alphabet</div>
-      <div class="alpha-grid" id="alpha-base-grid" style="margin-bottom: 30px;"></div>
-      
-      <div style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-bottom: 12px;">Umlauts & Special Characters</div>
-      <div class="alpha-grid" id="alpha-special-grid" style="margin-bottom: 30px;"></div>
+      <div class="alpha-section-header">
+        <div class="alpha-section-num">1</div>
+        <div class="alpha-section-title">Base Alphabet (Das Alphabet)</div>
+      </div>
+      <div class="alpha-grid" id="alpha-base-grid"></div>
+      <div class="alpha-section-header">
+        <div class="alpha-section-num">2</div>
+        <div class="alpha-section-title">Umlauts & Special Characters</div>
+      </div>
+      <div class="alpha-grid" id="alpha-umlaut-grid"></div>
+      <div class="alpha-section-header">
+        <div class="alpha-section-num">3</div>
+        <div class="alpha-section-title">Crucial Combinations (Diphthongs & Clusters)</div>
+      </div>
+      <div class="alpha-grid" id="alpha-combo-grid"></div>
     </div>
 
     <!-- GRAMMAR BRIDGE -->
     <div id="page-bridge" class="page">
-      <div class="page-header"><h1 class="page-title">🌉 Grammar Bridge</h1></div>
+      <div class="page-header">
+        <h1 class="page-title">🌉 Grammar Bridge</h1>
+      </div>
       <div class="card" style="margin-bottom:20px;">
         <div class="card-title">📌 Rule #1 — Verb-Second (V2) Position</div>
-        <p style="font-size:13.5px; color:var(--muted); margin-bottom:16px; line-height:1.7;">In German main clauses, the conjugated verb is <strong>always</strong> in the second position.</p>
+        <p style="font-size:13.5px; color:var(--muted); margin-bottom:16px; line-height:1.7;">In German main clauses,
+          the conjugated verb is <strong>always</strong> in the second position.</p>
         <div class="grid-2">
           <div style="background:var(--surface); padding:16px; border-radius:8px;">
-            <div style="font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase;">🇬🇧 English</div>
+            <div style="font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase;">🇬🇧 English
+            </div>
             <div style="color:#fff; font-family:var(--font-mono); margin-bottom:8px;">I go to school every day.</div>
             <div style="color:#fff; font-family:var(--font-mono);">Every day I go to school.</div>
           </div>
           <div style="background:var(--surface); padding:16px; border-radius:8px; border-left:3px solid var(--accent);">
-            <div style="font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase;">🇩🇪 German</div>
-            <div style="color:#fff; font-family:var(--font-mono); margin-bottom:8px;">Ich <span style="color:var(--accent)">gehe</span> jeden Tag zur Schule.</div>
-            <div style="color:#fff; font-family:var(--font-mono);">Jeden Tag <span style="color:var(--accent)">gehe</span> ich zur Schule.</div>
+            <div style="font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase;">🇩🇪 German
+            </div>
+            <div style="color:#fff; font-family:var(--font-mono); margin-bottom:8px;">Ich <span
+                style="color:var(--accent)">gehe</span> jeden Tag zur Schule.</div>
+            <div style="color:#fff; font-family:var(--font-mono);">Jeden Tag <span
+                style="color:var(--accent)">gehe</span> ich zur Schule.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- VIDEOS -->
+    <!-- VIDEOS (LMS) -->
     <div id="page-videos" class="page">
-      <div class="page-header"><h1 class="page-title">📺 Video Courses</h1></div>
-      <div class="video-layout">
-        <div class="video-player"><iframe id="vid-iframe" style="width: 100%; height: 100%; border: none;" src="" allowfullscreen></iframe></div>
-        <div class="video-list" id="video-list-container"></div>
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">📺 Video Courses</h1>
+          <p class="page-subtitle">Learn through interactive video lessons, grammar sheets, and quizzes.</p>
+        </div>
+      </div>
+      <div class="lms-layout">
+        <!-- Sidebar: Course Syllabus -->
+        <div class="lms-sidebar" id="lms-syllabus">
+          <div style="padding: 16px; color: var(--muted); text-align: center;">Loading syllabus...</div>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="lms-main">
+          <!-- Video Player -->
+          <div class="lms-player-container" id="lms-player-container">
+            <video id="lms-video" controls crossorigin playsinline
+              style="width: 100%; height: 100%; object-fit: contain; background: #000;">
+              Your browser does not support HTML video.
+            </video>
+          </div>
+
+          <!-- Tabs -->
+          <div class="lms-tabs">
+            <button class="lms-tab-btn active" onclick="switchLmsTab('grammar')">📝 Grammar Sheet</button>
+            <button class="lms-tab-btn" onclick="switchLmsTab('quiz')">🎯 Interactive Quiz</button>
+          </div>
+
+          <!-- Tab Contents -->
+          <div id="lms-tab-grammar" class="lms-tab-content active card">
+            <div id="lms-grammar-content" style="line-height: 1.6; color: var(--text);">
+              <p style="color: var(--muted);">Select a lecture from the syllabus to view its grammar notes.</p>
+            </div>
+          </div>
+
+          <div id="lms-tab-quiz" class="lms-tab-content card">
+            <div id="lms-quiz-container">
+              <p style="color: var(--muted);">Select a lecture to start its quiz.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- AI CHAT -->
     <div id="page-chat" class="page">
-      <div class="page-header"><h1 class="page-title">🤖 AI Tutor Chat</h1></div>
-      <div class="chat-window" id="chat-window">
-        <div class="msg msg-tutor"><div class="msg-avatar">🎓</div><div class="msg-bubble">🇩🇪 Hallo! Ich bin Klaus, dein Deutschlehrer. Wie geht es dir heute?</div></div>
+      <div class="page-header">
+        <h1 class="page-title">🤖 AI Tutor Chat</h1>
       </div>
-      <div style="display: flex; gap: 10px; background: var(--card); border: 1px solid var(--border); border-top: none; border-radius: 0 0 12px 12px; padding: 16px;">
-        <input type="text" id="chat-input" class="input" style="flex:1; margin:0;" placeholder="Type in German..." onkeydown="if(event.key==='Enter') window.sendChat()">
+      <div class="chat-window" id="chat-window">
+        <div class="msg msg-tutor">
+          <div class="msg-avatar">🎓</div>
+          <div class="msg-bubble">🇩🇪 Hallo! Ich bin Klaus, dein Deutschlehrer. Wie geht es dir heute?</div>
+        </div>
+      </div>
+      <div
+        style="display: flex; gap: 10px; background: var(--card); border: 1px solid var(--border); border-top: none; border-radius: 0 0 12px 12px; padding: 16px;">
+        <input type="text" id="chat-input" class="input" style="flex:1; margin:0;" placeholder="Type in German..."
+          onkeydown="if(event.key==='Enter') window.sendChat()">
         <button class="btn btn-accent" onclick="window.sendChat()">Send ↑</button>
       </div>
     </div>
@@ -466,45 +1593,55 @@
   ══════════════════════════════════════════════════════════════ -->
   <script>
     // --- Configuration ---
-    // n8n Webhook URL (Production)
     const N8N_WEBHOOK_URL = "https://n8n.tmadhu.me/webhook/e48110e1-919d-4dd9-8783-a1441e125a66";
 
-    // --- Data: Detailed Alphabet Array ---
+    // --- Data: Comprehensive Phonetics Array ---
     const ALPHABET = [
-      { letter:"A a", ipa:"/aː/", ex:"Apfel", tip:"Like 'ah' in father", special:false },
-      { letter:"B b", ipa:"/beː/", ex:"Ball", tip:"Same as English B", special:false },
-      { letter:"C c", ipa:"/tseː/", ex:"Café", tip:"'ts' before e/i, else 'k'", special:false },
-      { letter:"D d", ipa:"/deː/", ex:"Danke", tip:"Same as English D", special:false },
-      { letter:"E e", ipa:"/eː/", ex:"Essen", tip:"Like 'eh' in bed", special:false },
-      { letter:"F f", ipa:"/ɛf/", ex:"Fisch", tip:"Same as English F", special:false },
-      { letter:"G g", ipa:"/ɡeː/", ex:"Gut", tip:"Always hard G", special:false },
-      { letter:"H h", ipa:"/haː/", ex:"Haus", tip:"Aspirated at word start", special:false },
-      { letter:"I i", ipa:"/iː/", ex:"Igel", tip:"Like 'ee' in see", special:false },
-      { letter:"J j", ipa:"/jɔt/", ex:"Jahr", tip:"Like English Y", special:false },
-      { letter:"K k", ipa:"/kaː/", ex:"Kind", tip:"Same as English K", special:false },
-      { letter:"L l", ipa:"/ɛl/", ex:"Licht", tip:"Clear light L", special:false },
-      { letter:"M m", ipa:"/ɛm/", ex:"Mutter", tip:"Same as English M", special:false },
-      { letter:"N n", ipa:"/ɛn/", ex:"Nacht", tip:"Same as English N", special:false },
-      { letter:"O o", ipa:"/oː/", ex:"Ohr", tip:"Pure 'oh', no glide", special:false },
-      { letter:"P p", ipa:"/peː/", ex:"Post", tip:"Same as English P", special:false },
-      { letter:"Q q", ipa:"/kuː/", ex:"Quelle", tip:"Always 'kv' sound", special:false },
-      { letter:"R r", ipa:"/ɛʁ/", ex:"Rot", tip:"Guttural, throat vibration", special:false },
-      { letter:"S s", ipa:"/ɛs/", ex:"Sonne", tip:"'z' before vowels, else 's'", special:false },
-      { letter:"T t", ipa:"/teː/", ex:"Tag", tip:"Same as English T", special:false },
-      { letter:"U u", ipa:"/uː/", ex:"Uhr", tip:"Like 'oo' in moon", special:false },
-      { letter:"V v", ipa:"/faʊ/", ex:"Vogel", tip:"Usually 'f', rarely 'v'", special:false },
-      { letter:"W w", ipa:"/veː/", ex:"Wasser", tip:"Like English V sound", special:false },
-      { letter:"X x", ipa:"/ɪks/", ex:"Xylophon", tip:"Like 'ks' sound", special:false },
-      { letter:"Y y", ipa:"/ʏpsɪlɔn/", ex:"Yoga", tip:"Like German Ü in loanwords", special:false },
-      { letter:"Z z", ipa:"/tsɛt/", ex:"Zeit", tip:"Always 'ts' — never 'z'!", special:false },
-      { letter:"Ä ä", ipa:"/ɛː/", ex:"Äpfel", tip:"Like 'e' in bed, but longer", special:true },
-      { letter:"Ö ö", ipa:"/øː/", ex:"Öl", tip:"Say 'e' with rounded lips", special:true },
-      { letter:"Ü ü", ipa:"/yː/", ex:"Über", tip:"Say 'ee' with rounded lips", special:true },
-      { letter:"ß", ipa:"/sː/", ex:"Straße", tip:"Sharp double-S, no buzz", special:true }
+      // ── BASE ALPHABET ──
+      { type: "base", letter: "A a", letterNameAudio: "ah", ipa: "/aː/", tip: "Like 'ah' in father. Short A sounds like 'u' in 'hut'.", examples: [{ de: "der Apfel", en: "the apple" }, { de: "arbeiten", en: "to work" }] },
+      { type: "base", letter: "B b", letterNameAudio: "beh", ipa: "/beː/", tip: "Same as English B. At word end, sounds like 'p'.", examples: [{ de: "der Ball", en: "the ball" }, { de: "das Buch", en: "the book" }] },
+      { type: "base", letter: "C c", letterNameAudio: "tseh", ipa: "/tseː/", tip: "'ts' before e/i, otherwise 'k'. Rare alone.", examples: [{ de: "das Café", en: "the café" }, { de: "der Computer", en: "the computer" }] },
+      { type: "base", letter: "D d", letterNameAudio: "deh", ipa: "/deː/", tip: "Same as English D. At word end, sounds like 't'.", examples: [{ de: "Danke", en: "thank you" }, { de: "das Dorf", en: "the village" }] },
+      { type: "base", letter: "E e", letterNameAudio: "eh", ipa: "/eː/", tip: "Long: like 'ay' in say. Short: like 'e' in bed.", examples: [{ de: "essen", en: "to eat" }, { de: "der Elefant", en: "the elephant" }] },
+      { type: "base", letter: "F f", letterNameAudio: "eff", ipa: "/ɛf/", tip: "Same as English F.", examples: [{ de: "der Fisch", en: "the fish" }, { de: "fragen", en: "to ask" }] },
+      { type: "base", letter: "G g", letterNameAudio: "geh", ipa: "/ɡeː/", tip: "Always hard G as in 'go'. Never soft like 'gem'.", examples: [{ de: "gut", en: "good" }, { de: "der Garten", en: "the garden" }] },
+      { type: "base", letter: "H h", letterNameAudio: "hah", ipa: "/haː/", tip: "Aspirated at word start. Silent after vowels (lengthens them).", examples: [{ de: "das Haus", en: "the house" }, { de: "der Hund", en: "the dog" }] },
+      { type: "base", letter: "I i", letterNameAudio: "ih", ipa: "/iː/", tip: "Long: like 'ee' in see. Short: like 'i' in sit.", examples: [{ de: "der Igel", en: "the hedgehog" }, { de: "die Insel", en: "the island" }] },
+      { type: "base", letter: "J j", letterNameAudio: "yot", ipa: "/jɔt/", tip: "Pronounced like English 'Y' in 'yes'. Never like English J.", examples: [{ de: "das Jahr", en: "the year" }, { de: "ja", en: "yes" }] },
+      { type: "base", letter: "K k", letterNameAudio: "kah", ipa: "/kaː/", tip: "Same as English K. Always pronounced (even before 'n').", examples: [{ de: "das Kind", en: "the child" }, { de: "die Küche", en: "the kitchen" }] },
+      { type: "base", letter: "L l", letterNameAudio: "ell", ipa: "/ɛl/", tip: "Clear light L — tongue touches just behind upper teeth.", examples: [{ de: "das Licht", en: "the light" }, { de: "lernen", en: "to learn" }] },
+      { type: "base", letter: "M m", letterNameAudio: "emm", ipa: "/ɛm/", tip: "Same as English M.", examples: [{ de: "die Mutter", en: "the mother" }, { de: "der Mann", en: "the man" }] },
+      { type: "base", letter: "N n", letterNameAudio: "enn", ipa: "/ɛn/", tip: "Same as English N.", examples: [{ de: "die Nacht", en: "the night" }, { de: "nein", en: "no" }] },
+      { type: "base", letter: "O o", letterNameAudio: "oh", ipa: "/oː/", tip: "Pure rounded 'oh' — no glide like in English 'go'.", examples: [{ de: "das Ohr", en: "the ear" }, { de: "oder", en: "or" }] },
+      { type: "base", letter: "P p", letterNameAudio: "peh", ipa: "/peː/", tip: "Same as English P.", examples: [{ de: "die Post", en: "the post office" }, { de: "der Park", en: "the park" }] },
+      { type: "base", letter: "Q q", letterNameAudio: "kuh", ipa: "/kuː/", tip: "Always paired with 'u'. Pronounced 'kv' (not 'kw').", examples: [{ de: "die Quelle", en: "the source" }, { de: "das Quartier", en: "the quarter" }] },
+      { type: "base", letter: "R r", letterNameAudio: "err", ipa: "/ɛʁ/", tip: "Guttural throat vibration. At word end, sounds like 'ah'.", examples: [{ de: "rot", en: "red" }, { de: "der Regen", en: "the rain" }] },
+      { type: "base", letter: "S s", letterNameAudio: "ess", ipa: "/ɛs/", tip: "Voiced 'z' before vowels. Voiceless 's' at end.", examples: [{ de: "die Sonne", en: "the sun" }, { de: "sagen", en: "to say" }] },
+      { type: "base", letter: "T t", letterNameAudio: "teh", ipa: "/teː/", tip: "Same as English T.", examples: [{ de: "der Tag", en: "the day" }, { de: "trinken", en: "to drink" }] },
+      { type: "base", letter: "U u", letterNameAudio: "uh", ipa: "/uː/", tip: "Like 'oo' in moon. Lips very rounded.", examples: [{ de: "die Uhr", en: "the clock" }, { de: "und", en: "and" }] },
+      { type: "base", letter: "V v", letterNameAudio: "fau", ipa: "/faʊ/", tip: "Usually 'f' in native words. 'v' in foreign loanwords.", examples: [{ de: "der Vogel", en: "the bird" }, { de: "der Vater", en: "the father" }] },
+      { type: "base", letter: "W w", letterNameAudio: "veh", ipa: "/veː/", tip: "Pronounced like English 'V' — not like English 'W'!", examples: [{ de: "das Wasser", en: "the water" }, { de: "wissen", en: "to know" }] },
+      { type: "base", letter: "X x", letterNameAudio: "iks", ipa: "/ɪks/", tip: "Like 'ks' sound. Very rare in German.", examples: [{ de: "das Xylophon", en: "the xylophone" }] },
+      { type: "base", letter: "Y y", letterNameAudio: "üpsilon", ipa: "/ʏpsɪlɔn/", tip: "Pronounced like German Ü in most words. Rare letter.", examples: [{ de: "das Yoga", en: "yoga" }, { de: "der Typ", en: "the type/guy" }] },
+      { type: "base", letter: "Z z", letterNameAudio: "tsett", ipa: "/tsɛt/", tip: "Always 'ts' — NEVER a buzzing 'z' like English!", examples: [{ de: "die Zeit", en: "the time" }, { de: "zehn", en: "ten" }] },
+      // ── UMLAUTS & SPECIAL ──
+      { type: "umlaut", letter: "Ä ä", letterNameAudio: "äh", ipa: "/ɛː/", tip: "Like 'e' in 'bed' but held longer. Think of 'air'.", examples: [{ de: "die Äpfel", en: "the apples" }, { de: "der Bär", en: "the bear" }] },
+      { type: "umlaut", letter: "Ö ö", letterNameAudio: "öh", ipa: "/øː/", tip: "Say 'e' as in 'her', but with lips rounded into an O shape.", examples: [{ de: "das Öl", en: "the oil" }, { de: "schön", en: "beautiful" }] },
+      { type: "umlaut", letter: "Ü ü", letterNameAudio: "üh", ipa: "/yː/", tip: "Say 'ee' but with tightly rounded lips. Unique to German.", examples: [{ de: "über", en: "over/above" }, { de: "die Tür", en: "the door" }] },
+      { type: "umlaut", letter: "ß", letterNameAudio: "eszett", ipa: "/sː/", tip: "Sharp voiceless double-S. Used after long vowels & diphthongs.", examples: [{ de: "die Straße", en: "the street" }, { de: "groß", en: "big/tall" }] },
+      // ── CRUCIAL COMBINATIONS ──
+      { type: "combination", letter: "ei", letterNameAudio: "ai", ipa: "/aɪ/", tip: "Sounds like English 'eye' or 'my'. Very common!", examples: [{ de: "eins", en: "one" }, { de: "der Stein", en: "the stone" }] },
+      { type: "combination", letter: "ie", letterNameAudio: "ee", ipa: "/iː/", tip: "Long 'ee' sound like 'see'. Opposite of 'ei'!", examples: [{ de: "die Liebe", en: "the love" }, { de: "spielen", en: "to play" }] },
+      { type: "combination", letter: "eu", letterNameAudio: "oi", ipa: "/ɔʏ/", tip: "Sounds like 'oy' in 'boy'. Not like English 'you'.", examples: [{ de: "neu", en: "new" }, { de: "das Feuer", en: "the fire" }] },
+      { type: "combination", letter: "äu", letterNameAudio: "oi", ipa: "/ɔʏ/", tip: "Identical to 'eu' — sounds like 'oy'. Historically from ä+u.", examples: [{ de: "die Bäume", en: "the trees" }, { de: "die Häuser", en: "the houses" }] },
+      { type: "combination", letter: "sch", letterNameAudio: "sch", ipa: "/ʃ/", tip: "Like English 'sh' in 'ship'. Always this sound together.", examples: [{ de: "die Schule", en: "the school" }, { de: "schnell", en: "fast" }] },
+      { type: "combination", letter: "ch", letterNameAudio: "ch", ipa: "/ç/ or /x/", tip: "After e/i/ä/ö/ü → soft (ich). After a/o/u → hard (ach).", examples: [{ de: "ich", en: "I" }, { de: "das Buch", en: "the book" }] },
+      { type: "combination", letter: "st", letterNameAudio: "scht", ipa: "/ʃt/", tip: "At word START → 'sht'. In middle/end → normal 'st'.", examples: [{ de: "der Stein", en: "the stone" }, { de: "die Stadt", en: "the city" }] },
+      { type: "combination", letter: "sp", letterNameAudio: "schp", ipa: "/ʃp/", tip: "At word START → 'shp'. In middle/end → normal 'sp'.", examples: [{ de: "sprechen", en: "to speak" }, { de: "der Sport", en: "sports" }] }
     ];
 
     // --- State ---
-    let VOCAB = []; // Will be dynamically loaded from DB via PocketBase
+    let VOCAB = [];
     let learnedWordsMap = new Map();
     let currentLang = 'en';
     let vSearch = "", vCat = "all";
@@ -514,192 +1651,307 @@
     let certWordId = null;
     let certStep = 1;
     let isRandomPractice = false;
+    let isReviewMode = false;
 
-    // --- Initialize PocketBase ---
+    // SRS Configuration (in milliseconds)
+    const SRS_WARNING_DAYS = 30;
+    const SRS_PENALTY_DAYS = 45;
+    const SRS_PERMANENT_THRESHOLD = 3;
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
     let pb = null;
-    const PB_PASS_PADDING = "_PdB26!"; 
 
-    // --- UI Helpers ---
-    window.showToast = function(msg) {
+    window.showToast = function (msg) {
       const toast = document.getElementById('toast');
       toast.innerText = msg;
       toast.classList.add('show');
       setTimeout(() => { toast.classList.remove('show'); }, 3000);
     };
 
-    window.nav = function(pageId) {
+    window.nav = function (pageId) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById('page-' + pageId).classList.add('active');
       event.currentTarget.classList.add('active');
     };
 
-    window.handleProtectedNav = function(pageId) {
-      if(!isLoggedIn) { 
-        window.showToast("Please log in to access this feature."); 
-        window.openAuthModal(); 
-      } else { 
-        window.nav(pageId); 
-        if(pageId === 'practice') window.nextPracticeWord(); 
-        if(pageId === 'flashcards') window.renderFlashcardUI(); 
+    window.handleProtectedNav = function (pageId) {
+      if (!isLoggedIn) {
+        window.showToast("Please log in to access this feature.");
+        window.openAuthModal();
+      } else {
+        window.nav(pageId);
+        if (pageId === 'practice') window.nextPracticeWord();
+        if (pageId === 'flashcards') window.renderFlashcardUI();
       }
     };
 
-    window.setLang = function(lang) {
+    window.setLang = function (lang) {
       currentLang = lang; document.body.className = lang === 'bn' ? 'bn-mode' : '';
       document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('btn-' + lang).classList.add('active');
-      window.renderVocab(); if(isLoggedIn) window.renderMyWords();
+      window.renderVocab(); if (isLoggedIn) window.renderMyWords();
     };
 
-    window.openAuthModal = function() {
-      if(isLoggedIn) {
+    // ── Auth View Switcher ──
+    window.switchAuthView = function (view) {
+      document.getElementById('auth-view-login').style.display = 'none';
+      document.getElementById('auth-view-register').style.display = 'none';
+      document.getElementById('auth-view-forgot').style.display = 'none';
+      document.getElementById('auth-error').style.display = 'none';
+      document.getElementById('auth-success').style.display = 'none';
+      document.getElementById('auth-view-' + view).style.display = 'block';
+    };
+
+    window.openAuthModal = function () {
+      if (isLoggedIn) {
         dbLogout();
-      } else { 
-        document.getElementById('auth-modal').style.display = 'flex'; 
+      } else {
+        document.getElementById('auth-modal').style.display = 'flex';
         document.getElementById('auth-error').style.display = 'none';
-        document.getElementById('auth-username').value = '';
-        document.getElementById('auth-password').value = '';
+        document.getElementById('auth-success').style.display = 'none';
+        // Reset all inputs
+        ['auth-login-identity', 'auth-login-password', 'auth-reg-username', 'auth-reg-email', 'auth-reg-password', 'auth-forgot-email'].forEach(id => {
+          const el = document.getElementById(id); if (el) el.value = '';
+        });
+        // Default to Login view
+        window.switchAuthView('login');
       }
     };
-    
-    window.closeAuthModal = function() { document.getElementById('auth-modal').style.display = 'none'; };
 
-    // --- Error Catcher System ---
+    window.closeAuthModal = function () { document.getElementById('auth-modal').style.display = 'none'; };
+
     function parsePbError(err) {
-      if (err.status === 0) {
-        return "সার্ভার কানেকশন ব্লকড! (ClientResponseError 0)\nআপনার ব্রাউজারের অ্যাডব্লকার (Adblocker/Brave Shields) বন্ধ করুন, অথবা আপনার সার্ভারের CORS/SSL সেটিং ঠিক নেই।";
-      }
-      let errMsg = "ব্যর্থ হয়েছে!";
+      if (err.status === 0) return "Server connection blocked! Check your browser's adblocker or network.";
+      // Parse PocketBase structured validation errors
       if (err.data && err.data.data) {
-        const issues = Object.keys(err.data.data).map(k => `${k} -> ${err.data.data[k].message}`).join(', ');
-        if(issues) errMsg += "\nকারণ: " + issues;
-      } else if (err.message) {
-        errMsg += "\n" + err.message;
+        const fieldErrors = err.data.data;
+        const messages = [];
+        for (const key in fieldErrors) {
+          const msg = fieldErrors[key].message || '';
+          // Translate common PB auth errors to user-friendly messages
+          if (key === 'email' && msg.includes('already')) messages.push('Email is already in use.');
+          else if (key === 'username' && msg.includes('already')) messages.push('Username is already taken.');
+          else if (key === 'email' && msg.includes('valid')) messages.push('Please enter a valid email address.');
+          else if (key === 'password' && msg.includes('8')) messages.push('Password must be at least 8 characters.');
+          else messages.push(`${key}: ${msg}`);
+        }
+        return messages.join('\n');
       }
-      return errMsg;
+      // Handle auth-specific errors
+      if (err.message) {
+        const m = err.message.toLowerCase();
+        if (m.includes('invalid') || m.includes('credentials') || m.includes('authenticate')) return 'Invalid credentials. Please check your username/email and password.';
+        if (m.includes('not found')) return 'Account not found.';
+        return err.message;
+      }
+      return 'An unexpected error occurred. Please try again.';
     }
 
-    // =========================================================================
-    // 🛠️ CUSTOM MANUAL AUTHENTICATION LOGIC (BASE COLLECTION)
-    // =========================================================================
-    
-    window.handleRegister = async function() {
-      if(!pb) return window.showToast("Database not initialized yet.");
-      const btn = document.getElementById('auth-reg-btn'); 
-      const unameRaw = document.getElementById('auth-username').value.trim();
-      const passRaw = document.getElementById('auth-password').value.trim();
+    window.handleRegister = async function () {
+      if (!pb) return window.showToast("Database not initialized yet.");
+      const btn = document.getElementById('auth-reg-btn');
+      const username = document.getElementById('auth-reg-username').value.trim();
+      const email = document.getElementById('auth-reg-email').value.trim();
+      const password = document.getElementById('auth-reg-password').value.trim();
       const errBox = document.getElementById('auth-error');
-      
-      if(!unameRaw || !passRaw) return window.showToast("নাম এবং পাসওয়ার্ড দুটিই দিন।");
-      
-      btn.innerText = "Registering...";
-      errBox.style.display = 'none';
+      const successBox = document.getElementById('auth-success');
 
-      const safeName = unameRaw.replace(/"/g, '').trim();
+      errBox.style.display = 'none';
+      successBox.style.display = 'none';
+
+      if (!username || !email || !password) {
+        errBox.innerText = 'Please fill in all fields: Username, Email, and Password.';
+        errBox.style.display = 'block';
+        return;
+      }
+      if (password.length < 8) {
+        errBox.innerText = 'Password must be at least 8 characters long.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      btn.innerText = "Registering...";
+      btn.disabled = true;
 
       try {
-        const existing = await pb.collection('app_users').getList(1, 1, { filter: `username = "${safeName}"` });
-        if(existing.items.length > 0) {
-            errBox.innerText = "এই নাম আগেই ব্যবহার করা হয়েছে। অন্য নাম দিন অথবা লগইন করুন।";
-            errBox.style.display = 'block';
-            btn.innerText = "Register";
-            return;
-        }
-
-        const record = await pb.collection('app_users').create({ 
-          username: safeName, 
-          password: passRaw, 
-          learnedWords: [], 
-          streak: 1 
+        // Create user in the 'learners' Auth collection
+        await pb.collection('learners').create({
+          username: username,
+          email: email,
+          password: password,
+          passwordConfirm: password,
+          learnedWords: [],
+          streak: 1
         });
-        
-        finalizeLogin(record);
-        window.showToast("Registration Successful!");
-        
-      } catch(err) {
-        console.error("Manual Register Error:", err);
+
+        // Auto-login after successful registration
+        const authData = await pb.collection('learners').authWithPassword(email, password);
+        finalizeLogin(authData.record);
+        window.showToast("Registration Successful! Welcome aboard! 🎉");
+      } catch (err) {
         errBox.innerText = parsePbError(err);
         errBox.style.display = 'block';
       }
       btn.innerText = "Register";
+      btn.disabled = false;
     };
 
-    window.handleLogin = async function() {
-      if(!pb) return window.showToast("Database not initialized yet.");
-      const btn = document.getElementById('auth-log-btn'); 
-      const unameRaw = document.getElementById('auth-username').value.trim();
-      const passRaw = document.getElementById('auth-password').value.trim();
+    window.handleLogin = async function () {
+      if (!pb) return window.showToast("Database not initialized yet.");
+      const btn = document.getElementById('auth-log-btn');
+      const identity = document.getElementById('auth-login-identity').value.trim();
+      const password = document.getElementById('auth-login-password').value.trim();
       const errBox = document.getElementById('auth-error');
-      
-      if(!unameRaw || !passRaw) return window.showToast("নাম এবং পাসওয়ার্ড দুটিই দিন।");
-      
-      btn.innerText = "Connecting...";
+
       errBox.style.display = 'none';
-      const safeName = unameRaw.replace(/"/g, '').trim();
+      document.getElementById('auth-success').style.display = 'none';
+
+      if (!identity || !password) {
+        errBox.innerText = 'Please enter your username/email and password.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      btn.innerText = "Connecting...";
+      btn.disabled = true;
 
       try {
-        const result = await pb.collection('app_users').getList(1, 1, { filter: `username = "${safeName}"` });
-        if(result.items.length === 0) {
-            errBox.innerText = "এই নামে কোনো একাউন্ট পাওয়া যায়নি!";
-            errBox.style.display = 'block';
-            btn.innerText = "Log In";
-            return;
-        }
-
-        const userRecord = result.items[0];
-        if(userRecord.password !== passRaw) {
-            errBox.innerText = "ভুল পাসওয়ার্ড!";
-            errBox.style.display = 'block';
-            btn.innerText = "Log In";
-            return;
-        }
-
-        finalizeLogin(userRecord);
+        // PocketBase native auth — accepts username or email as identity
+        const authData = await pb.collection('learners').authWithPassword(identity, password);
+        finalizeLogin(authData.record);
         window.showToast("Logged in successfully!");
-
-      } catch(e) {
-        console.error("Manual Login Error:", e);
-        errBox.innerText = parsePbError(e);
+      } catch (err) {
+        errBox.innerText = parsePbError(err);
         errBox.style.display = 'block';
       }
       btn.innerText = "Log In";
+      btn.disabled = false;
+    };
+
+    window.handlePasswordReset = async function () {
+      if (!pb) return window.showToast("Database not initialized yet.");
+      const btn = document.getElementById('auth-reset-btn');
+      const email = document.getElementById('auth-forgot-email').value.trim();
+      const errBox = document.getElementById('auth-error');
+      const successBox = document.getElementById('auth-success');
+
+      errBox.style.display = 'none';
+      successBox.style.display = 'none';
+
+      if (!email) {
+        errBox.innerText = 'Please enter your registered email address.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      btn.innerText = "Sending...";
+      btn.disabled = true;
+
+      try {
+        await pb.collection('learners').requestPasswordReset(email);
+        successBox.innerText = '✅ Password reset link sent! Check your email inbox (and spam folder).';
+        successBox.style.display = 'block';
+        window.showToast("Reset link sent to " + email);
+      } catch (err) {
+        errBox.innerText = parsePbError(err);
+        errBox.style.display = 'block';
+      }
+      btn.innerText = "Send Reset Link";
+      btn.disabled = false;
+    };
+
+    window.closeNewPasswordModal = function () {
+      document.getElementById('new-password-modal').style.display = 'none';
+      // If closed without saving, clean the URL
+      const url = new URL(window.location);
+      url.searchParams.delete('token');
+      window.history.replaceState({}, '', url);
+    };
+
+    window.handleConfirmPasswordReset = async function () {
+      const btn = document.getElementById('np-btn');
+      const pass = document.getElementById('np-password').value.trim();
+      const confirm = document.getElementById('np-confirm').value.trim();
+      const errBox = document.getElementById('np-error');
+
+      errBox.style.display = 'none';
+
+      if (!pass || !confirm) {
+        errBox.innerText = 'Please fill in both fields.';
+        errBox.style.display = 'block';
+        return;
+      }
+      if (pass.length < 8) {
+        errBox.innerText = 'Password must be at least 8 characters long.';
+        errBox.style.display = 'block';
+        return;
+      }
+      if (pass !== confirm) {
+        errBox.innerText = 'Passwords do not match.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      if (!token) {
+        errBox.innerText = 'Invalid or missing reset token.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      btn.innerText = "Saving...";
+      btn.disabled = true;
+
+      try {
+        await pb.collection('learners').confirmPasswordReset(token, pass, confirm);
+        window.showToast("Password updated successfully! You can now log in.");
+        document.getElementById('new-password-modal').style.display = 'none';
+
+        // Clean URL
+        const url = new URL(window.location);
+        url.searchParams.delete('token');
+        window.history.replaceState({}, '', url);
+
+        // Open login modal
+        window.openAuthModal();
+      } catch (err) {
+        errBox.innerText = parsePbError(err);
+        errBox.style.display = 'block';
+      }
+      btn.innerText = "Save Password";
+      btn.disabled = false;
     };
 
     function finalizeLogin(record) {
       isLoggedIn = true;
       currentUsername = record.username;
       currentUserId = record.id;
-      
-      localStorage.setItem('german_app_session_id', record.id);
+      // pb.authStore is automatically populated by authWithPassword / authRefresh
       window.closeAuthModal();
       enableUserModeUI(record);
     }
 
-    window.dbLogout = function() {
-      isLoggedIn = false; 
-      currentUsername = ""; 
+    window.dbLogout = function () {
+      isLoggedIn = false;
+      currentUsername = "";
       currentUserId = null;
       learnedWordsMap.clear();
-      localStorage.removeItem('german_app_session_id');
-      
+      // Clear PocketBase auth store (removes token + model from localStorage)
+      if (pb) pb.authStore.clear();
       document.getElementById('user-profile-widget').innerText = "👤 Log In / Register";
       document.getElementById('dash-username').innerText = "Guest";
-      document.getElementById('stat-words').innerText = "0"; 
-      document.getElementById('stat-streak').innerText = "0"; 
+      document.getElementById('stat-words').innerText = "0";
+      document.getElementById('stat-streak').innerText = "0";
       document.getElementById('stat-rank').innerText = "-";
-      
       window.renderVocab(); window.nav('dashboard');
       window.showToast("Logged out successfully.");
     };
 
     async function dbSaveWords(wordsArray) {
-      if(pb && isLoggedIn && currentUserId) { 
-        try {
-          await pb.collection('app_users').update(currentUserId, { learnedWords: wordsArray }); 
-        } catch (e) {
-          console.error("Failed to save words to normal DB:", e);
-        }
+      if (pb && isLoggedIn && currentUserId) {
+        try { await pb.collection('learners').update(currentUserId, { learnedWords: wordsArray }); } catch (e) { console.error("Failed to save words:", e); }
       }
     }
 
@@ -707,295 +1959,592 @@
       isLoggedIn = true;
       document.getElementById('user-profile-widget').innerText = `🔴 Logout (${currentUsername})`;
       document.getElementById('dash-username').innerText = currentUsername;
-      
-      if(data.learnedWords && Array.isArray(data.learnedWords)) {
+
+      if (data.learnedWords && Array.isArray(data.learnedWords)) {
         learnedWordsMap.clear();
-        data.learnedWords.forEach(w => learnedWordsMap.set(w.id, w));
+        const migrated = migrateLearnedWordsFormat(data.learnedWords);
+        migrated.forEach(w => learnedWordsMap.set(w.id, w));
       }
       document.getElementById('stat-streak').innerText = data.streak || 1;
-      document.getElementById('stat-words').innerText = learnedWordsMap.size;
-      
+      evaluateSRS();
       document.getElementById('loader').style.display = 'none';
       window.renderVocab(); window.renderMyWords();
     }
 
-    // --- Dynamic N8N Trigger Logic ---
-    window.triggerNextBatch = async function() {
+    // =========================================================================
+    // 🧠 SPACED REPETITION SYSTEM (SRS) ENGINE
+    // =========================================================================
+
+    function migrateLearnedWordsFormat(wordsArray) {
+      return wordsArray.map(w => {
+        if (w.hasOwnProperty('addedAt') && w.hasOwnProperty('lastReviewAt')) return w;
+        const ts = w.timestamp || Date.now();
+        return { id: w.id, addedAt: ts, lastReviewAt: ts, reviewCount: 0, isPermanent: false };
+      });
+    }
+
+    async function evaluateSRS() {
+      const now = Date.now();
+      let wordsRemoved = false;
+      const survivingWords = [];
+      const warningWords = [];
+
+      learnedWordsMap.forEach((entry, id) => {
+        const daysSinceReview = (now - entry.lastReviewAt) / DAY_MS;
+        if (entry.isPermanent) { survivingWords.push(entry); return; }
+        if (daysSinceReview > SRS_PENALTY_DAYS) { wordsRemoved = true; return; }
+        survivingWords.push(entry);
+        if (daysSinceReview > SRS_WARNING_DAYS) warningWords.push(entry);
+      });
+
+      if (wordsRemoved) {
+        learnedWordsMap.clear();
+        survivingWords.forEach(w => learnedWordsMap.set(w.id, w));
+        await dbSaveWords(Array.from(learnedWordsMap.values()));
+        window.showToast('⚠️ Some forgotten words were removed from your progress.');
+      }
+      document.getElementById('stat-words').innerText = learnedWordsMap.size;
+      warningWords.sort((a, b) => a.lastReviewAt - b.lastReviewAt);
+      renderSRSWarnings(warningWords);
+    }
+
+    function renderSRSWarnings(warningWords) {
+      const section = document.getElementById('srs-warning-section');
+      if (!warningWords || warningWords.length === 0) { section.style.display = 'none'; return; }
+      section.style.display = 'block';
+      const now = Date.now();
+      let itemsHtml = warningWords.map(entry => {
+        const daysSinceReview = (now - entry.lastReviewAt) / DAY_MS;
+        const daysLeft = Math.max(0, Math.ceil(SRS_PENALTY_DAYS - daysSinceReview));
+        const urgencyClass = daysLeft <= 5 ? 'critical' : daysLeft <= 10 ? 'moderate' : 'safe';
+        const deadlineText = daysLeft <= 0 ? 'REMOVING...' : `${daysLeft}d left`;
+        const wObj = VOCAB.find(v => v.id === entry.id);
+        const wordText = wObj ? wObj.de : `ID: ${entry.id}`;
+        const meaningText = wObj ? (currentLang === 'bn' ? wObj.bn : wObj.en) : '—';
+        const progressPct = Math.min(100, (entry.reviewCount / SRS_PERMANENT_THRESHOLD) * 100);
+        return `
+          <div class="srs-item">
+            <div class="srs-item-info">
+              <div class="srs-item-word">${wordText}</div>
+              <div class="srs-item-meaning">${meaningText}</div>
+              <div class="srs-review-count">Reviews: ${entry.reviewCount}/${SRS_PERMANENT_THRESHOLD}</div>
+              <div class="srs-progress-bar"><div class="srs-progress-fill" style="width:${progressPct}%;"></div></div>
+            </div>
+            <div class="srs-urgency">
+              <span class="srs-deadline ${urgencyClass}">⏳ ${deadlineText}</span>
+              <button class="btn-review" onclick="openReviewCert('${entry.id}')">🔄 Review Now</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      section.innerHTML = `
+        <div class="srs-warning-card">
+          <div class="srs-header">
+            <h3>⚠️ Needs Review (Action Required)</h3>
+            <span class="srs-counter">${warningWords.length} word${warningWords.length > 1 ? 's' : ''} at risk</span>
+          </div>
+          <div class="srs-list">${itemsHtml}</div>
+        </div>
+      `;
+    }
+
+    window.openReviewCert = function (id) { isReviewMode = true; window.openCertModal(id, false); };
+
+    window.triggerNextBatch = async function () {
       const btn = document.getElementById('trigger-n8n-btn');
       btn.innerText = "⏳ Generating & Syncing...";
       btn.disabled = true;
-
       try {
         const response = await fetch(N8N_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: "generate_batch", current_count: VOCAB.length })
         });
-        
-        if(response.ok) {
-           window.showToast("Success! N8N is generating words. Reloading in 10s...");
-           setTimeout(() => { window.location.reload(); }, 10000);
+        if (response.ok) {
+          window.showToast("Success! N8N is generating words. Reloading in 10s...");
+          setTimeout(() => { window.location.reload(); }, 10000);
         } else {
-           window.showToast("Failed to trigger N8N workflow.");
-           btn.innerText = "🚀 পরবর্তী ৫০টি শব্দ আনুন";
-           btn.disabled = false;
+          window.showToast("Failed to trigger N8N workflow.");
+          btn.innerText = "🚀 পরবর্তী ৫০টি শব্দ আনুন"; btn.disabled = false;
         }
-      } catch(e) {
-        console.error(e);
-        window.showToast("Network Error: Could not reach n8n webhook.");
-        btn.innerText = "🚀 পরবর্তী ৫০টি শব্দ আনুন";
-        btn.disabled = false;
+      } catch (e) {
+        window.showToast("Network Error.");
+        btn.innerText = "🚀 পরবর্তী ৫০টি শব্দ আনুন"; btn.disabled = false;
       }
     }
 
-    // --- Renderers ---
-    window.renderVocab = function() {
-      const tbody = document.getElementById('vocab-body'); 
+    window.renderVocab = function () {
+      const tbody = document.getElementById('vocab-body');
       tbody.innerHTML = '';
-
-      if(VOCAB.length === 0) {
-         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--muted);">No words available. Make sure DB is synced.</td></tr>';
-         document.getElementById('next-batch-trigger').style.display = 'none';
-         return;
-      }
-
-      const filtered = VOCAB.filter(w => (!vSearch || w.de.toLowerCase().includes(vSearch) || w.en.toLowerCase().includes(vSearch)) && (vCat === 'all' || (w.cat && w.cat === vCat) || (vCat==='noun' && w.g)));
+      const filtered = VOCAB.filter(w => (!vSearch || w.de.toLowerCase().includes(vSearch) || w.en.toLowerCase().includes(vSearch)) && (vCat === 'all' || (w.cat && w.cat === vCat) || (vCat === 'noun' && w.g)));
       filtered.forEach((w, idx) => {
         const isLearned = learnedWordsMap.has(w.id);
         const btnCls = isLearned ? 'btn-success' : 'btn-outline';
-        const btnTxt = isLearned ? '✓ Certified' : '+ Learn';
-        const catBadgeCls = w.g ? `b-${w.g}` : `b-${w.cat||'noun'}`;
-        const catText = w.g || w.cat || 'noun';
-        
         tbody.innerHTML += `
           <tr style="opacity: ${isLearned ? '0.6' : '1'}">
             <td>${idx + 1}</td>
-            <td class="vocab-de ${w.g ? 'c-'+w.g : ''}">${w.de}</td>
+            <td class="vocab-de">${w.de}</td>
             <td>${currentLang === 'bn' ? w.bn : w.en}</td>
-            <td><span class="badge ${catBadgeCls}">${catText}</span></td>
+            <td><span class="badge">${w.g || w.cat || 'noun'}</span></td>
             <td style="text-align:center;">
-              <button class="btn btn-sm ${btnCls}" onclick="openCertModal('${w.id}')" ${isLearned?'disabled':''} style="width:100%">${btnTxt}</button>
+              <button class="btn btn-sm ${btnCls}" onclick="openCertModal('${w.id}')" ${isLearned ? 'disabled' : ''} style="width:100%">${isLearned ? '✓ Certified' : '+ Learn'}</button>
             </td>
           </tr>
         `;
       });
-
-      // Check if ALL fetched vocab has been learned to show the trigger button
       const allLearned = VOCAB.length > 0 && VOCAB.every(w => learnedWordsMap.has(w.id));
-      if(allLearned) {
-        document.getElementById('next-batch-trigger').style.display = 'block';
-      } else {
-        document.getElementById('next-batch-trigger').style.display = 'none';
-      }
+      document.getElementById('next-batch-trigger').style.display = allLearned ? 'block' : 'none';
     };
 
-    window.setVocabFilter = function(val) {
+    window.setVocabFilter = function (val) {
       vCat = val; const btns = document.getElementById('cat-filters').querySelectorAll('.pill');
-      btns.forEach(b => b.classList.remove('active')); 
-      Array.from(btns).find(b => b.innerText.toLowerCase() === val.toLowerCase() || (val==='all' && b.innerText==='All')).classList.add('active');
+      btns.forEach(b => b.classList.remove('active'));
+      Array.from(btns).find(b => b.innerText.toLowerCase() === val.toLowerCase() || (val === 'all' && b.innerText === 'All')).classList.add('active');
       window.renderVocab();
     };
-    
+
     document.getElementById('search-input').addEventListener('input', (e) => { vSearch = e.target.value.toLowerCase(); window.renderVocab(); });
 
-    window.renderMyWords = function() {
+    window.renderMyWords = function () {
       const container = document.getElementById('my-words-container'); container.innerHTML = '';
-      if(learnedWordsMap.size === 0) return container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted)">No words certified yet.</div>';
+      if (learnedWordsMap.size === 0) return container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted)">No words certified yet.</div>';
       const groups = {};
       learnedWordsMap.forEach(r => {
-        const dStr = new Date(r.timestamp).toLocaleDateString();
-        if(!groups[dStr]) groups[dStr] = [];
-        const wObj = VOCAB.find(v => v.id === r.id); if(wObj) groups[dStr].push(wObj);
+        const ts = r.addedAt || Date.now();
+        const dStr = new Date(ts).toLocaleDateString();
+        if (!groups[dStr]) groups[dStr] = [];
+        const wObj = VOCAB.find(v => v.id === r.id); if (wObj) groups[dStr].push({ ...wObj, _srs: r });
       });
-      Object.keys(groups).sort((a,b) => new Date(b) - new Date(a)).forEach(date => {
+      Object.keys(groups).sort((a, b) => new Date(b) - new Date(a)).forEach(date => {
         let html = `<div style="font-weight:bold; color:var(--muted); margin: 20px 0 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">📅 Learned on: ${date}</div><div class="grid-4">`;
-        groups[date].forEach(w => { html += `<div class="card" style="padding:12px; text-align:center;"><div class="vocab-de ${w.g ? 'c-'+w.g : ''}" style="font-size:18px; margin-bottom:4px;">${w.de}</div><div style="font-size:13px; color:var(--muted)">${currentLang === 'bn' ? w.bn : w.en}</div></div>`; });
+        groups[date].forEach(w => {
+          const permBadge = w._srs && w._srs.isPermanent ? '<div style="font-size:10px; color:var(--das); margin-top:4px; font-weight:700;">✅ PERMANENT</div>' : '';
+          html += `<div class="card" style="padding:12px; text-align:center;"><div class="vocab-de ${w.g ? 'c-' + w.g : ''}" style="font-size:18px; margin-bottom:4px;">${w.de}</div><div style="font-size:13px; color:var(--muted)">${currentLang === 'bn' ? w.bn : w.en}</div>${permBadge}</div>`;
+        });
         container.innerHTML += html + `</div>`;
       });
     };
 
+    // --- Speech Helper ---
+    window.speakDE = function (text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'de-DE'; u.rate = 0.85;
+        window.speechSynthesis.speak(u);
+      }
+    };
+
     function renderAlphabet() {
-      const baseGrid = document.getElementById('alpha-base-grid');
-      const specialGrid = document.getElementById('alpha-special-grid');
-      baseGrid.innerHTML = ''; specialGrid.innerHTML = '';
+      const grids = {
+        base: document.getElementById('alpha-base-grid'),
+        umlaut: document.getElementById('alpha-umlaut-grid'),
+        combination: document.getElementById('alpha-combo-grid')
+      };
+      Object.values(grids).forEach(g => { if (g) g.innerHTML = ''; });
 
       ALPHABET.forEach(a => {
-        const letterChar = a.letter.split(' ')[0]; 
-        const html = `
+        const grid = grids[a.type];
+        if (!grid) return;
+
+        // Build examples HTML
+        const examplesHtml = (a.examples || []).map(ex => {
+          const safeWord = ex.de.replace(/'/g, "\\'");
+          return `
+            <div class="alpha-ex-row">
+              <button class="alpha-ex-audio" onclick="speakDE('${safeWord}')" title="Listen">🔊</button>
+              <div class="alpha-ex-text">
+                <div class="alpha-ex-de">${ex.de}</div>
+                <div class="alpha-ex-en">${ex.en}</div>
+              </div>
+            </div>`;
+        }).join('');
+
+        const safeName = (a.letterNameAudio || a.letter.split(' ')[0]).replace(/'/g, "\\'");
+
+        grid.innerHTML += `
           <div class="alpha-card">
-            <!-- Letter Pronunciation -->
-            <div class="alpha-letter" title="বর্ণের উচ্চারণ" onclick="if('speechSynthesis' in window){ let u=new SpeechSynthesisUtterance('${letterChar}'); u.lang='de-DE'; window.speechSynthesis.speak(u); }">
-              ${a.letter} <span style="font-size:18px; opacity:0.7;">🔊</span>
+            <div class="alpha-card-top">
+              <div class="alpha-letter">${a.letter}</div>
+              <button class="alpha-speak-btn" onclick="speakDE('${safeName}')" title="Hear letter name">🔊</button>
             </div>
-            <div class="alpha-ipa">${a.ipa}</div>
-            <!-- Example Word Pronunciation -->
-            <div class="alpha-ex" title="শব্দের উচ্চারণ" onclick="if('speechSynthesis' in window){ let u=new SpeechSynthesisUtterance('${a.ex}'); u.lang='de-DE'; window.speechSynthesis.speak(u); }">
-              ${a.ex} <button class="audio-btn">🔊</button>
+            <div class="alpha-card-mid">
+              <div class="alpha-ipa">${a.ipa}</div>
+              <div class="alpha-tip">${a.tip}</div>
             </div>
-            <div class="alpha-tip">${a.tip}</div>
-          </div>
-        `;
-        if (a.special) specialGrid.innerHTML += html;
-        else baseGrid.innerHTML += html;
+            <div class="alpha-card-bottom">
+              <div class="alpha-examples-label">Examples</div>
+              ${examplesHtml}
+            </div>
+          </div>`;
       });
     }
 
-    // --- Certification Logic ---
-    window.openCertModal = function(id, isRandom = false) {
-      if(!isLoggedIn) { window.showToast("Please log in to save your progress!"); window.openAuthModal(); return; }
+    window.openCertModal = function (id, isRandom = false) {
+      if (!isLoggedIn) { window.showToast("Please log in!"); window.openAuthModal(); return; }
       certWordId = id; certStep = 1; isRandomPractice = isRandom;
       const w = VOCAB.find(v => v.id === id);
-      document.getElementById('cert-target-word').innerText = w.de; document.getElementById('cert-target-word').style.display = 'block';
-      document.querySelectorAll('.cert-step').forEach(el => el.classList.remove('active')); document.getElementById('cert-step-1').classList.add('active');
-      document.getElementById('cert-feedback').style.display = 'none'; [1,2,3].forEach(i => { const inp = document.getElementById('cert-input-'+i); if(inp) inp.value = ''; });
-      const s3 = document.getElementById('cert-step3-instruction');
-      if(w.g) s3.innerText = "What is the article (gender) for this noun? (der/die/das)"; else s3.innerText = "Type the word exactly as it is one more time.";
-      document.getElementById('cert-step-num').innerText = 1; document.getElementById('cert-modal').style.display = 'flex';
-      setTimeout(()=>document.getElementById('cert-input-1').focus(), 100);
+      document.getElementById('cert-target-word').innerText = w.de;
+      document.querySelectorAll('.cert-step').forEach(el => el.classList.remove('active'));
+      document.getElementById('cert-step-1').classList.add('active');
+      document.getElementById('cert-feedback').style.display = 'none';
+      [1, 2, 3].forEach(i => { const inp = document.getElementById('cert-input-' + i); if (inp) inp.value = ''; });
+      document.getElementById('cert-modal').style.display = 'flex';
     };
-    
-    window.closeCertModal = function() { document.getElementById('cert-modal').style.display = 'none'; };
 
-    window.verifyCertStep = async function(step) {
+    window.closeCertModal = function () { document.getElementById('cert-modal').style.display = 'none'; isReviewMode = false; };
+
+    window.verifyCertStep = async function (step) {
       const w = VOCAB.find(v => v.id === certWordId);
-      const input = document.getElementById('cert-input-'+step).value.trim().toLowerCase();
+      const input = document.getElementById('cert-input-' + step).value.trim().toLowerCase();
       const fb = document.getElementById('cert-feedback');
       let isCorrect = false;
-      
-      if(step === 1) { if(input === w.en.toLowerCase() || input === w.bn) isCorrect = true; } 
-      else if(step === 2) { if(input === w.de.toLowerCase() || input === w.de.replace(/^(der|die|das)\s/i, '').toLowerCase()) isCorrect = true; }
-      else if(step === 3) { if(w.g && input === w.g.toLowerCase()) isCorrect = true; else if(!w.g && input === w.de.toLowerCase()) isCorrect = true; }
 
-      if(isCorrect) {
+      if (step === 1) {
+        if (input === w.en.toLowerCase() || input === w.bn) isCorrect = true;
+      } else if (step === 2) {
+        if (input === w.de.toLowerCase() || input === w.de.replace(/^(der|die|das)\s/i, '').toLowerCase()) isCorrect = true;
+      } else if (step === 3) {
+        if (w.g && input === w.g.toLowerCase()) isCorrect = true;
+        else if (!w.g && input === w.de.toLowerCase()) isCorrect = true;
+      }
+
+      if (isCorrect) {
         fb.className = "cert-feedback btn-success"; fb.innerText = "✅ Correct!"; fb.style.display = 'block';
         setTimeout(async () => {
-          fb.style.display = 'none'; document.getElementById('cert-step-'+step).classList.remove('active');
-          if(step < 3) {
-            certStep++; document.getElementById('cert-step-num').innerText = certStep; document.getElementById('cert-step-'+certStep).classList.add('active');
-            if(certStep === 2) document.getElementById('cert-target-word').style.display = 'none';
-            if(certStep === 3) document.getElementById('cert-target-word').style.display = 'block';
-            setTimeout(()=>document.getElementById('cert-input-'+certStep).focus(), 100);
+          fb.style.display = 'none'; document.getElementById('cert-step-' + step).classList.remove('active');
+          if (step < 3) {
+            certStep++; document.getElementById('cert-step-num').innerText = certStep; document.getElementById('cert-step-' + certStep).classList.add('active');
+            if (certStep === 2) document.getElementById('cert-target-word').style.display = 'none';
+            if (certStep === 3) document.getElementById('cert-target-word').style.display = 'block';
+            setTimeout(() => document.getElementById('cert-input-' + certStep).focus(), 100);
           } else {
             document.getElementById('cert-target-word').style.display = 'none'; document.getElementById('cert-step-success').classList.add('active'); document.getElementById('cert-step-num').parentElement.style.display = 'none';
-            if(!isRandomPractice && isLoggedIn) {
-              const newList = Array.from(learnedWordsMap.values()); 
-              newList.push({ id: w.id, timestamp: Date.now() });
-              
-              await dbSaveWords(newList); // Save to Normal PocketBase Table
-              
-              learnedWordsMap.set(w.id, { id: w.id, timestamp: Date.now() });
-              document.getElementById('stat-words').innerText = learnedWordsMap.size;
-              window.renderVocab(); window.renderMyWords();
+            if (isLoggedIn) {
+              if (isReviewMode) {
+                // SRS Review Mode: Update existing entry (Rule C & D)
+                const existing = learnedWordsMap.get(w.id);
+                if (existing) {
+                  existing.lastReviewAt = Date.now();
+                  existing.reviewCount = (existing.reviewCount || 0) + 1;
+                  if (existing.reviewCount >= SRS_PERMANENT_THRESHOLD) {
+                    existing.isPermanent = true;
+                  }
+                  learnedWordsMap.set(w.id, existing);
+                }
+                isReviewMode = false;
+                await dbSaveWords(Array.from(learnedWordsMap.values()));
+                document.getElementById('stat-words').innerText = learnedWordsMap.size;
+                evaluateSRS();
+                window.renderVocab(); window.renderMyWords();
+              } else if (!isRandomPractice) {
+                // New word certification with SRS format
+                const now = Date.now();
+                const newEntry = { id: w.id, addedAt: now, lastReviewAt: now, reviewCount: 0, isPermanent: false };
+                learnedWordsMap.set(w.id, newEntry);
+                await dbSaveWords(Array.from(learnedWordsMap.values()));
+                document.getElementById('stat-words').innerText = learnedWordsMap.size;
+                window.renderVocab(); window.renderMyWords();
+              }
             }
           }
         }, 800);
       } else { fb.className = "cert-feedback btn-danger"; fb.innerText = "❌ Incorrect. Try again."; fb.style.display = 'block'; }
     };
-    
-    window.speakCertWord = function() { const w = VOCAB.find(v => v.id === certWordId); if(w && 'speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(w.de); u.lang = 'de-DE'; window.speechSynthesis.speak(u); } };
-    window.startRandomPractice = function() { if(learnedWordsMap.size === 0) return window.showToast("You haven't certified any words yet!"); const ids = Array.from(learnedWordsMap.keys()); window.openCertModal(ids[Math.floor(Math.random() * ids.length)], true); };
+
+    window.speakCertWord = function () { const w = VOCAB.find(v => v.id === certWordId); if (w && 'speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(w.de); u.lang = 'de-DE'; window.speechSynthesis.speak(u); } };
+    window.startRandomPractice = function () { if (learnedWordsMap.size === 0) return window.showToast("You haven't certified any words yet!"); const ids = Array.from(learnedWordsMap.keys()); window.openCertModal(ids[Math.floor(Math.random() * ids.length)], true); };
 
     // --- Flashcards & Chat ---
     let fcFlipped = false, fcIdx = 0;
-    window.renderFlashcardUI = function() {
+    window.renderFlashcardUI = function () {
       const list = Array.from(learnedWordsMap.keys());
-      if(list.length === 0) return document.getElementById('fc-inner').innerHTML = `<div class="flashcard-face"><div style="color:var(--muted)">No words learned yet. Add some from Vocab Tracker!</div></div>`;
+      if (list.length === 0) return document.getElementById('fc-inner').innerHTML = `<div class="flashcard-face"><div style="color:var(--muted)">No words learned yet. Add some from Vocab Tracker!</div></div>`;
       const wObj = VOCAB.find(v => v.id === list[fcIdx]);
-      if(!wObj) return;
+      if (!wObj) return;
       document.getElementById('fc-front').innerText = wObj.de; document.getElementById('fc-back').innerText = wObj.en; document.getElementById('fc-bn').innerText = currentLang === 'bn' ? wObj.bn : '';
       const inner = document.getElementById('fc-inner'); fcFlipped ? inner.classList.add('flipped') : inner.classList.remove('flipped');
     };
-    window.toggleFlashcard = function() { fcFlipped = !fcFlipped; window.renderFlashcardUI(); };
-    window.navFlashcard = function(dir) { const list = Array.from(learnedWordsMap.keys()); if(list.length===0) return; fcFlipped = false; fcIdx = (fcIdx + dir + list.length) % list.length; setTimeout(window.renderFlashcardUI, 200); };
-    
-    window.sendChat = function() {
-      const inp = document.getElementById('chat-input'); if(!inp.value.trim()) return; const win = document.getElementById('chat-window');
+    window.toggleFlashcard = function () { fcFlipped = !fcFlipped; window.renderFlashcardUI(); };
+    window.navFlashcard = function (dir) { const list = Array.from(learnedWordsMap.keys()); if (list.length === 0) return; fcFlipped = false; fcIdx = (fcIdx + dir + list.length) % list.length; setTimeout(window.renderFlashcardUI, 200); };
+
+    window.sendChat = function () {
+      const inp = document.getElementById('chat-input'); if (!inp.value.trim()) return; const win = document.getElementById('chat-window');
       win.innerHTML += `<div class="msg msg-user"><div class="msg-avatar">🧑</div><div class="msg-bubble">${inp.value}</div></div>`; inp.value = ''; win.scrollTop = win.scrollHeight;
       setTimeout(() => { win.innerHTML += `<div class="msg msg-tutor"><div class="msg-avatar">🎓</div><div class="msg-bubble">Sehr gut! (Mock response)</div></div>`; win.scrollTop = win.scrollHeight; }, 1000);
     };
 
-    // Shared DB UI Functions
-    window.renderVideos = function(vids) {
-      const container = document.getElementById('video-list-container'); container.innerHTML = '';
-      if(vids.length === 0) return container.innerHTML = '<div style="color:var(--muted); padding:10px;">No videos from PocketBase yet.</div>';
-      vids.forEach((v, index) => {
-        const div = document.createElement('div');
-        div.className = `video-item ${index === 0 ? 'active' : ''}`;
-        div.onclick = function() { 
-          document.getElementById('vid-iframe').src = v.url + "?controls=1&modestbranding=1&rel=0";
-          document.querySelectorAll('.video-item').forEach(el => el.classList.remove('active')); this.classList.add('active');
-        };
-        div.innerHTML = `<div class="v-title">${v.serial}. ${v.title}</div><div class="v-meta"><span>▶ Play</span><span>${v.duration}</span></div>`;
-        container.appendChild(div);
-        if(index === 0) document.getElementById('vid-iframe').src = v.url + "?controls=1&modestbranding=1&rel=0";
-      });
+    // =========================================================================
+    // 🎓 LMS Engine (Courses & Quizzes)
+    // =========================================================================
+    let COURSE_UNITS = [];
+    let COURSE_LECTURES = [];
+    let currentLectureId = null;
+    let quizState = { currentQuestion: 0, score: 0, questions: [] };
+
+    window.initLMS = async function () {
+      try {
+        COURSE_UNITS = await pb.collection('course_units').getFullList({ sort: 'created' });
+        COURSE_LECTURES = await pb.collection('course_lectures').getFullList({ sort: 'created' });
+        renderSyllabus();
+        if (COURSE_LECTURES.length > 0) {
+          // Find first lecture of first unit if possible
+          const firstUnit = COURSE_UNITS[0];
+          const firstLec = firstUnit ? COURSE_LECTURES.find(l => l.unit === firstUnit.id) : COURSE_LECTURES[0];
+          if (firstLec) window.loadLecture(firstLec.id);
+        }
+      } catch (err) {
+        console.warn("Failed to load LMS data", err);
+        const syl = document.getElementById('lms-syllabus');
+        if (syl) syl.innerHTML = '<div style="padding:16px; color:var(--die);">Failed to load syllabus. Check database.</div>';
+      }
     };
 
-    window.renderLeaderboard = function(users) {
+    function renderSyllabus() {
+      const container = document.getElementById('lms-syllabus');
+      if (!container) return;
+      container.innerHTML = '';
+
+      COURSE_UNITS.forEach((unit, uIdx) => {
+        const unitLectures = COURSE_LECTURES.filter(l => l.unit === unit.id);
+        const isOpen = uIdx === 0 ? 'open' : '';
+        const arrow = uIdx === 0 ? '▼' : '▶';
+
+        const unitHtml = `
+          <div class="unit-accordion">
+            <div class="unit-header" onclick="toggleUnit(this)">
+              <span>${unit.title || 'Untitled Unit'}</span>
+              <span class="unit-arrow">${arrow}</span>
+            </div>
+            <div class="unit-content ${isOpen}">
+              ${unitLectures.map(l => `
+                <div class="lecture-item" id="lec-item-${l.id}" onclick="loadLecture('${l.id}')">
+                  ▶ ${l.title || 'Untitled Lecture'}
+                </div>
+              `).join('')}
+              ${unitLectures.length === 0 ? '<div class="lecture-item" style="color:var(--muted)">No lectures yet.</div>' : ''}
+            </div>
+          </div>
+        `;
+        container.innerHTML += unitHtml;
+      });
+    }
+
+    window.toggleUnit = function (el) {
+      const content = el.nextElementSibling;
+      const arrow = el.querySelector('.unit-arrow');
+      if (content.classList.contains('open')) {
+        content.classList.remove('open');
+        arrow.innerText = '▶';
+      } else {
+        content.classList.add('open');
+        arrow.innerText = '▼';
+      }
+    };
+
+    window.loadLecture = function (lectureId) {
+      currentLectureId = lectureId;
+      const lecture = COURSE_LECTURES.find(l => l.id === lectureId);
+      if (!lecture) return;
+
+      // Update Active State in Syllabus
+      document.querySelectorAll('.lecture-item').forEach(el => el.classList.remove('active'));
+      const activeItem = document.getElementById(`lec-item-${lectureId}`);
+      if (activeItem) activeItem.classList.add('active');
+
+      // Video Player
+      const playerContainer = document.getElementById('lms-player-container');
+      let url = lecture.video_url || '';
+
+      if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        let embedUrl = url;
+        if (url.includes('watch?v=')) embedUrl = url.replace('watch?v=', 'embed/');
+        else if (url.includes('youtu.be/')) embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
+
+        // Strip extra query params and add standard ones
+        embedUrl = embedUrl.split('&')[0];
+        playerContainer.innerHTML = `<iframe src="${embedUrl}?controls=1&modestbranding=1&rel=0" style="width:100%; height:100%; border:none;" allowfullscreen></iframe>`;
+      } else {
+        const subtitleSrc = lecture.subtitles_vtt ? (lecture.subtitles_vtt.startsWith('http') ? lecture.subtitles_vtt : pb.files.getUrl(lecture, lecture.subtitles_vtt)) : '';
+        const trackHtml = subtitleSrc ? `<track id="lms-subtitles" label="English" kind="subtitles" srclang="en" src="${subtitleSrc}" default>` : '';
+
+        playerContainer.innerHTML = `
+          <video id="lms-video" controls crossorigin playsinline style="width: 100%; height: 100%; object-fit: contain; background: #000;">
+            <source src="${url}">
+            ${trackHtml}
+            Your browser does not support HTML video.
+          </video>
+        `;
+      }
+
+      // Grammar Tab
+      const grammarContainer = document.getElementById('lms-grammar-content');
+      grammarContainer.innerHTML = lecture.grammar_sheet || '<p style="color:var(--muted)">No grammar notes available for this lecture.</p>';
+
+      // Quiz Tab
+      initQuiz(lecture.quiz_json);
+
+      // Reset to Grammar Tab automatically when a new lecture is loaded
+      window.switchLmsTab('grammar');
+    };
+
+    window.switchLmsTab = function (tab) {
+      document.querySelectorAll('.lms-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.lms-tab-content').forEach(c => c.classList.remove('active'));
+
+      const tabBtn = document.querySelector(`.lms-tab-btn[onclick="switchLmsTab('${tab}')"]`);
+      if (tabBtn) tabBtn.classList.add('active');
+
+      const tabContent = document.getElementById(`lms-tab-${tab}`);
+      if (tabContent) tabContent.classList.add('active');
+    };
+
+    function initQuiz(quizJson) {
+      const container = document.getElementById('lms-quiz-container');
+      try {
+        const questions = typeof quizJson === 'string' ? JSON.parse(quizJson) : quizJson;
+        if (!questions || questions.length === 0) {
+          container.innerHTML = '<p style="color:var(--muted)">No quiz available for this lecture.</p>';
+          return;
+        }
+        quizState = { currentQuestion: 0, score: 0, questions: questions };
+        renderQuizQuestion();
+      } catch (e) {
+        container.innerHTML = '<p style="color:var(--die)">Error loading quiz data. Ensure it is valid JSON.</p>';
+      }
+    }
+
+    function renderQuizQuestion() {
+      const container = document.getElementById('lms-quiz-container');
+      if (quizState.currentQuestion >= quizState.questions.length) {
+        // Show Results
+        container.innerHTML = `
+          <div class="quiz-result-card">
+            <h2>Quiz Completed! 🎉</h2>
+            <div class="quiz-score">${quizState.score} / ${quizState.questions.length}</div>
+            <p style="color:var(--muted); margin-bottom: 24px;">Great job completing this practice block.</p>
+            <button class="btn btn-accent" onclick="initQuiz(quizState.questions)">🔄 Retry Quiz</button>
+          </div>
+        `;
+        return;
+      }
+
+      const q = quizState.questions[quizState.currentQuestion];
+      const optsHtml = (q.options || []).map((opt, idx) => `
+        <button class="quiz-option" onclick="handleQuizAnswer(${idx}, ${q.correctIndex}, this)">${opt}</button>
+      `).join('');
+
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; margin-bottom: 16px; font-size:13px; color:var(--muted); font-weight:600; text-transform:uppercase;">
+          <span>Question ${quizState.currentQuestion + 1} of ${quizState.questions.length}</span>
+          <span>Score: ${quizState.score}</span>
+        </div>
+        <div class="quiz-question">${q.question || 'Missing question text'}</div>
+        <div class="quiz-options" id="quiz-options-container">
+          ${optsHtml}
+        </div>
+        <button class="btn btn-accent" id="quiz-next-btn" style="display:none; margin-top:20px; width:100%;" onclick="nextQuizQuestion()">Next Question ➔</button>
+      `;
+    }
+
+    window.handleQuizAnswer = function (selectedIndex, correctIndex, btn) {
+      const options = document.getElementById('quiz-options-container').children;
+      for (let i = 0; i < options.length; i++) {
+        options[i].disabled = true;
+        if (i === correctIndex) {
+          options[i].classList.add('correct');
+        } else if (i === selectedIndex && selectedIndex !== correctIndex) {
+          options[i].classList.add('wrong');
+        }
+      }
+
+      if (selectedIndex === correctIndex) {
+        quizState.score++;
+      }
+
+      document.getElementById('quiz-next-btn').style.display = 'block';
+    };
+
+    window.nextQuizQuestion = function () {
+      quizState.currentQuestion++;
+      renderQuizQuestion();
+    };
+
+    window.renderLeaderboard = function (users) {
       const tbody = document.getElementById('leaderboard-body'); tbody.innerHTML = '';
       users.forEach((u, i) => {
-        if(isLoggedIn && u.id === currentUserId) document.getElementById('stat-rank').innerText = `#${i+1}`;
+        if (isLoggedIn && u.id === currentUserId) document.getElementById('stat-rank').innerText = `#${i + 1}`;
         const isMe = isLoggedIn && u.id === currentUserId;
-        tbody.innerHTML += `<tr style="${isMe ? 'background: rgba(240,192,64,0.1)' : ''}"><td style="font-weight:bold; color:var(--accent)">#${i+1}</td><td style="font-weight:bold">${u.username} ${isMe?'(You)':''}</td><td>${u.learnedWords?.length || 0}</td></tr>`;
+        tbody.innerHTML += `<tr style="${isMe ? 'background: rgba(240,192,64,0.1)' : ''}"><td style="font-weight:bold; color:var(--accent)">#${i + 1}</td><td style="font-weight:bold">${u.username} ${isMe ? '(You)' : ''}</td><td>${u.learnedWords?.length || 0}</td></tr>`;
       });
     };
 
     // =========================================================================
     // 🚀 INITIALIZATION (PocketBase Only)
     // =========================================================================
-    window.onload = function() {
+    window.onload = function () {
       renderAlphabet();
 
       setTimeout(async () => {
         try {
           pb = new PocketBase('https://efljudb.duckdns.org');
 
+          // Check for Password Reset Token
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.has('token')) {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('new-password-modal').style.display = 'flex';
+            document.getElementById('np-password').value = '';
+            document.getElementById('np-confirm').value = '';
+            document.getElementById('np-error').style.display = 'none';
+          }
+
           // Fetch Dynamic Vocab from PocketBase
           try {
             const vocabRecords = await pb.collection('vocabulary').getFullList({ sort: 'created' });
             VOCAB = vocabRecords.map(r => ({
-              id: r.id, 
-              de: r.word_de, 
-              en: r.word_en, 
-              bn: r.word_bn, 
-              g: r.g, 
-              cat: r.cat 
+              id: r.id,
+              de: r.word_de,
+              en: r.word_en,
+              bn: r.word_bn,
+              g: r.g,
+              cat: r.cat
             }));
             window.renderVocab();
-          } catch(e) {
+          } catch (e) {
             console.log("No vocab found or table missing.");
             window.renderVocab();
           }
 
           document.getElementById('loader').style.display = 'none';
 
-          // Check Session
-          const savedUserId = localStorage.getItem('german_app_session_id');
-          if(savedUserId) {
+          // Check Session — restore from PocketBase authStore
+          if (pb.authStore.isValid) {
             try {
-              const userRecord = await pb.collection('app_users').getOne(savedUserId);
-              if(userRecord) {
-                 currentUserId = userRecord.id;
-                 currentUsername = userRecord.username;
-                 enableUserModeUI(userRecord);
-              }
-            } catch(sessionErr) {
-              console.log("Old session invalid, clearing.");
-              localStorage.removeItem('german_app_session_id');
+              // Verify the token is still valid by refreshing
+              const authData = await pb.collection('learners').authRefresh();
+              const userRecord = authData.record;
+              currentUserId = userRecord.id;
+              currentUsername = userRecord.username;
+              enableUserModeUI(userRecord);
+            } catch (sessionErr) {
+              console.log("Session expired or invalid, clearing.");
+              pb.authStore.clear();
             }
           }
 
           // Fetch Videos & Leaderboard
-          try { const vids = await pb.collection('videos').getFullList({ sort: 'serial' }); window.renderVideos(vids); } catch(e) {}
-          try { const users = await pb.collection('app_users').getFullList({ sort: '-streak' }); window.renderLeaderboard(users); } catch(e) {}
+          window.initLMS();
+          try { const users = await pb.collection('learners').getFullList({ sort: '-streak' }); window.renderLeaderboard(users); } catch (e) { }
 
-        } catch(err) {
+        } catch (err) {
           document.getElementById('loader').style.display = 'none';
           console.warn("PocketBase is not reachable right now.");
         }
-      }, 500); 
+      }, 500);
     };
 
   </script>
 </body>
+
 </html>
